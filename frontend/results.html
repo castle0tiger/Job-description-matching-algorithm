@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>분석 결과 - JD 후보자 매칭 시스템</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .score-ring { position:relative; display:inline-flex; align-items:center; justify-content:center; }
+    .badge-up { background:#dcfce7; color:#166534; }
+    .badge-mid { background:#fef9c3; color:#854d0e; }
+    .badge-down { background:#fee2e2; color:#991b1b; }
+    .fit-상 { background:#d1fae5; color:#065f46; }
+    .fit-중 { background:#fef3c7; color:#92400e; }
+    .fit-하 { background:#fee2e2; color:#991b1b; }
+    .rec-적극\ 추천 { background:#dbeafe; color:#1e40af; }
+    .rec-추천 { background:#d1fae5; color:#065f46; }
+    .rec-검토\ 필요 { background:#fef9c3; color:#92400e; }
+    .rec-미추천 { background:#fee2e2; color:#991b1b; }
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+<div class="max-w-5xl mx-auto py-10 px-4">
+
+  <!-- 헤더 -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-indigo-700">분석 결과</h1>
+      <p id="jd-title" class="text-slate-500 text-sm mt-0.5"></p>
+    </div>
+    <a href="/" class="text-sm text-indigo-600 hover:underline">← 새로 분석하기</a>
+  </div>
+
+  <!-- 요약 카드 -->
+  <div class="grid grid-cols-4 gap-3 mb-6" id="summary-cards"></div>
+
+  <!-- 필터 탈락자 -->
+  <div id="filtered-section" class="hidden mb-6">
+    <details class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <summary class="p-4 font-semibold text-slate-700 flex items-center justify-between">
+        <span id="filtered-title">필터 탈락 후보자</span>
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </summary>
+      <div id="filtered-list" class="px-4 pb-4 space-y-2"></div>
+    </details>
+  </div>
+
+  <!-- 매칭 결과 테이블 -->
+  <div id="results-section">
+    <h2 class="text-lg font-semibold text-slate-800 mb-3">매칭 결과 (점수 순위)</h2>
+    <div id="results-list" class="space-y-4"></div>
+  </div>
+
+  <!-- 데이터 없음 -->
+  <div id="no-data" class="hidden text-center py-20">
+    <p class="text-slate-400 text-lg">분석 결과가 없습니다.</p>
+    <a href="/" class="mt-4 inline-block text-indigo-600 hover:underline">← 분석 페이지로 돌아가기</a>
+  </div>
+</div>
+
+<script>
+const data = JSON.parse(sessionStorage.getItem('analysisResult') || 'null');
+
+if (!data) {
+  document.getElementById('results-section').classList.add('hidden');
+  document.getElementById('no-data').classList.remove('hidden');
+} else {
+  render(data);
+}
+
+function render(d) {
+  const jd = d.jd_requirements;
+  document.getElementById('jd-title').textContent = `직무: ${jd.position || '-'} | 도메인: ${jd.domain || '-'}`;
+
+  // 요약 카드
+  const passed = d.results.filter(r => r.filter_result.passed);
+  const cards = [
+    { label: '총 이력서', value: d.total_resumes, color: 'indigo' },
+    { label: '필터 탈락', value: d.filtered_out_count, color: 'red' },
+    { label: '분석 완료', value: d.analyzed_count, color: 'green' },
+    { label: '상위 후보', value: passed.filter(r => r.match_result && r.match_result.total_score >= 70).length, color: 'blue' },
+  ];
+  document.getElementById('summary-cards').innerHTML = cards.map(c =>
+    `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 text-center">
+       <div class="text-3xl font-bold text-${c.color}-600">${c.value}</div>
+       <div class="text-sm text-slate-500 mt-1">${c.label}</div>
+     </div>`
+  ).join('');
+
+  // 필터 탈락자
+  const failed = d.results.filter(r => !r.filter_result.passed);
+  if (failed.length > 0) {
+    document.getElementById('filtered-section').classList.remove('hidden');
+    document.getElementById('filtered-title').textContent = `필터 탈락 후보자 (${failed.length}명)`;
+    document.getElementById('filtered-list').innerHTML = failed.map(r =>
+      `<div class="flex items-start gap-3 py-2 border-t border-slate-100">
+         <span class="text-red-400 text-lg">✗</span>
+         <div>
+           <span class="font-medium text-slate-700">${r.profile.name || r.profile.filename}</span>
+           <div class="text-xs text-slate-400 mt-0.5">${r.filter_result.reasons.join(' · ')}</div>
+         </div>
+       </div>`
+    ).join('');
+  }
+
+  // 매칭 결과
+  const matched = d.results.filter(r => r.filter_result.passed && r.match_result);
+  if (matched.length === 0) {
+    document.getElementById('results-list').innerHTML =
+      '<p class="text-slate-400 text-sm">필터 통과 후보자가 없습니다.</p>';
+    return;
+  }
+
+  document.getElementById('results-list').innerHTML = matched.map((r, idx) => {
+    const m = r.match_result;
+    const p = r.profile;
+    const scoreColor = m.total_score >= 80 ? 'text-green-600' : m.total_score >= 60 ? 'text-yellow-600' : 'text-red-500';
+    const fitClass = `fit-${m.overall_fit}`;
+    const recClass = `rec-${m.recommendation}`;
+
+    return `
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- 카드 헤더 -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">${idx + 1}</div>
+          <div>
+            <div class="font-semibold text-slate-800">${p.name || p.filename}</div>
+            <div class="text-xs text-slate-400">${p.filename}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="${scoreColor} text-3xl font-bold">${m.total_score}<span class="text-base font-normal text-slate-400">점</span></div>
+          <div class="flex gap-1 mt-1 justify-end">
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${fitClass}">${m.overall_fit}급</span>
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${recClass}">${m.recommendation}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 세부 점수 바 -->
+      <div class="px-5 py-3 grid grid-cols-3 gap-3 text-center border-b border-slate-100">
+        ${scoreBar('스킬 매칭', m.skill_match_score)}
+        ${scoreBar('경력 적합', m.experience_score)}
+        ${scoreBar('학력 충족', m.education_score)}
+      </div>
+
+      <!-- 후보자 기본 정보 -->
+      <div class="px-5 py-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500 border-b border-slate-100">
+        ${p.age ? `<span>나이: <b>${p.age}세</b></span>` : ''}
+        ${p.total_experience_years != null ? `<span>경력: <b>${p.total_experience_years}년</b></span>` : ''}
+        ${p.education ? `<span>학력: <b>${p.education}</b> ${p.education_major ? '(' + p.education_major + ')' : ''}</span>` : ''}
+        ${p.last_salary ? `<span>전직장 연봉: <b>${p.last_salary.toLocaleString()}만원</b></span>` : ''}
+        ${p.certifications?.length ? `<span>자격증: <b>${p.certifications.join(', ')}</b></span>` : ''}
+      </div>
+
+      <!-- 보유 스킬 -->
+      ${p.skills?.length ? `
+      <div class="px-5 py-3 border-b border-slate-100">
+        <div class="text-xs text-slate-400 mb-1.5">보유 스킬</div>
+        <div class="flex flex-wrap gap-1.5">
+          ${p.skills.map(s => `<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${s}</span>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- 강점/약점 -->
+      <div class="px-5 py-3 grid grid-cols-2 gap-4 border-b border-slate-100">
+        <div>
+          <div class="text-xs text-slate-400 mb-1">강점</div>
+          <ul class="space-y-0.5">${(m.strengths || []).map(s => `<li class="text-sm text-green-700">✓ ${s}</li>`).join('')}</ul>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400 mb-1">약점</div>
+          <ul class="space-y-0.5">${(m.weaknesses || []).map(s => `<li class="text-sm text-red-600">✗ ${s}</li>`).join('')}</ul>
+        </div>
+      </div>
+
+      <!-- AI 평가 의견 -->
+      <div class="px-5 py-3">
+        <div class="text-xs text-slate-400 mb-1">AI 평가 의견</div>
+        <p class="text-sm text-slate-600 leading-relaxed">${m.reasoning}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function scoreBar(label, score) {
+  const color = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-400' : 'bg-red-400';
+  return `<div>
+    <div class="text-xs text-slate-400 mb-1">${label}</div>
+    <div class="bg-slate-100 rounded-full h-2 w-full">
+      <div class="${color} h-2 rounded-full" style="width:${score}%"></div>
+    </div>
+    <div class="text-xs font-semibold text-slate-700 mt-0.5">${score}점</div>
+  </div>`;
+}
+</script>
+</body>
+</html>

@@ -4,7 +4,8 @@ import re
 from google import genai
 from .models import JDRequirements, CandidateProfile
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+def _get_client():
+    return genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
 def _extract_json(text: str) -> dict:
@@ -40,7 +41,7 @@ def analyze_jd(jd_text: str) -> JDRequirements:
 }}
 ```"""
 
-    response = client.models.generate_content(
+    response = _get_client().models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )
@@ -75,7 +76,7 @@ def analyze_resume(resume_text: str, filename: str = "") -> CandidateProfile:
 ```"""
 
     try:
-        response = client.models.generate_content(
+        response = _get_client().models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
         )

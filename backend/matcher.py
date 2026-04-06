@@ -4,7 +4,8 @@ import re
 from google import genai
 from .models import JDRequirements, CandidateProfile, MatchResult
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+def _get_client():
+    return genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
 def _extract_json(text: str) -> dict:
@@ -72,7 +73,7 @@ def match_candidate(jd: JDRequirements, candidate: CandidateProfile) -> MatchRes
 overall_fit은 반드시 "상"/"중"/"하" 중 하나.
 recommendation은 반드시 "적극 추천"/"추천"/"검토 필요"/"미추천" 중 하나."""
 
-    response = client.models.generate_content(
+    response = _get_client().models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )

@@ -1,8 +1,11 @@
 import json
 import os
 import re
+from dotenv import load_dotenv
 from google import genai
 from .models import JDRequirements, CandidateProfile
+
+load_dotenv()
 
 def _get_client():
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")

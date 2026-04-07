@@ -1,20 +1,21 @@
 import json
 import os
 import re
-from dotenv import load_dotenv
-from google import genai
+import requests
 from .models import JDRequirements, CandidateProfile
 
-load_dotenv()
+API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
 
-_client = None
 
-def _get_client():
-    global _client
-    if _client is None:
-        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
-        _client = genai.Client(api_key=api_key)
-    return _client
+def _call_gemini(prompt: str) -> str:
+    response = requests.post(
+        GEMINI_URL,
+        json={"contents": [{"parts": [{"text": prompt}]}]},
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
 
 
 def _extract_json(text: str) -> dict:
@@ -49,12 +50,7 @@ def analyze_jd(jd_text: str) -> JDRequirements:
   "job_description": "직무 한 줄 요약"
 }}
 ```"""
-
-    response = _get_client().models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-    )
-    text = response.text
+    text = _call_gemini(prompt)
     data = _extract_json(text)
     return JDRequirements(**data)
 
@@ -83,13 +79,8 @@ def analyze_resume(resume_text: str, filename: str = "") -> CandidateProfile:
   "career_summary": "경력 3줄 요약"
 }}
 ```"""
-
     try:
-        response = _get_client().models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        text = response.text
+        text = _call_gemini(prompt)
         data = _extract_json(text)
         profile = CandidateProfile(**data)
         profile.filename = filename

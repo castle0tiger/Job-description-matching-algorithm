@@ -8,9 +8,7 @@ from .models import JDRequirements, CandidateProfile
 load_dotenv()
 
 def _get_client():
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
     return genai.Client(api_key=api_key)
 
 

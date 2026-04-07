@@ -7,9 +7,14 @@ from .models import JDRequirements, CandidateProfile
 
 load_dotenv()
 
+_client = None
+
 def _get_client():
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
-    return genai.Client(api_key=api_key)
+    global _client
+    if _client is None:
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 
 def _extract_json(text: str) -> dict:

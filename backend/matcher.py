@@ -5,7 +5,10 @@ from google import genai
 from .models import JDRequirements, CandidateProfile, MatchResult
 
 def _get_client():
-    return genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
+    return genai.Client(api_key=api_key)
 
 
 def _extract_json(text: str) -> dict:

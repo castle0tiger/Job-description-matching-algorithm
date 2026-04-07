@@ -11,6 +11,12 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
+# 환경변수 확인 로그
+import sys
+_api_key = os.environ.get("GEMINI_API_KEY")
+print(f"[startup] GEMINI_API_KEY 존재 여부: {'YES' if _api_key else 'NO'}", file=sys.stderr)
+print(f"[startup] 환경변수 목록: {[k for k in os.environ.keys() if 'GEMINI' in k or 'GOOGLE' in k or 'API' in k]}", file=sys.stderr)
+
 from .analyzer import analyze_jd, analyze_resume
 from .filter import apply_filter
 from .matcher import match_candidate

@@ -205,76 +205,36 @@
     formData.append('required_certifications', document.getElementById('f-certs').value);
     formData.append('min_last_salary', document.getElementById('f-salary').value);
 
-    try {
-      const response = await fetch('/api/analyze-stream', { method: 'POST', body: formData });
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+    // 진행 애니메이션
+    let pct = 0;
+    const progressTimer = setInterval(() => {
+      pct = Math.min(pct + 1, 90);
+      document.getElementById('progress-bar').style.width = pct + '%';
+    }, 2000);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop();
-        lines.forEach(chunk => parseSSE(chunk));
+    document.getElementById('progress-msg').textContent = 'AI가 분석 중입니다. 이력서 수에 따라 수 분 소요될 수 있습니다...';
+
+    try {
+      const response = await fetch('/api/analyze', { method: 'POST', body: formData });
+      clearInterval(progressTimer);
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || '서버 오류');
       }
+
+      const result = await response.json();
+      document.getElementById('progress-bar').style.width = '100%';
+      document.getElementById('progress-msg').textContent = '분석 완료! 결과 페이지로 이동합니다...';
+      addLog('🏁 분석 완료!', 'success');
+      sessionStorage.setItem('analysisResult', JSON.stringify(result));
+      setTimeout(() => { window.location.href = '/results'; }, 1000);
+
     } catch (e) {
-      addLog('오류: ' + e.message, 'error');
+      clearInterval(progressTimer);
+      addLog('🚨 오류: ' + e.message, 'error');
       btn.disabled = false;
       btn.textContent = '분석 시작';
-    }
-  }
-
-  function parseSSE(chunk) {
-    const lines = chunk.split('\n');
-    let event = '', data = '';
-    lines.forEach(l => {
-      if (l.startsWith('event: ')) event = l.slice(7);
-      if (l.startsWith('data: ')) data = l.slice(6);
-    });
-    if (!event || !data) return;
-    try {
-      const payload = JSON.parse(data);
-      handleEvent(event, payload);
-    } catch (_) {}
-  }
-
-  function handleEvent(event, payload) {
-    const log = document.getElementById('progress-log');
-    const msg = document.getElementById('progress-msg');
-    const bar = document.getElementById('progress-bar');
-
-    if (event === 'progress') {
-      msg.textContent = payload.message;
-      if (payload.total > 0) {
-        const pct = Math.round((payload.current / payload.total) * 100);
-        bar.style.width = pct + '%';
-      }
-      addLog(payload.message);
-    } else if (event === 'jd_done') {
-      addLog('✅ ' + payload.message, 'success');
-      bar.style.width = '10%';
-    } else if (event === 'filter_result') {
-      if (payload.passed) {
-        addLog(`✅ ${payload.filename} → 필터 통과`);
-      } else {
-        addLog(`❌ ${payload.filename} → 탈락: ${payload.reasons.join(', ')}`, 'warn');
-      }
-    } else if (event === 'match_result') {
-      addLog(`🎯 ${payload.filename} → 점수 ${payload.score}점 (${payload.recommendation})`, 'success');
-    } else if (event === 'match_error') {
-      addLog(`⚠️ ${payload.filename} → 매칭 오류: ${payload.error}`, 'warn');
-    } else if (event === 'error') {
-      addLog('🚨 오류: ' + payload.message, 'error');
-      document.getElementById('analyze-btn').disabled = false;
-      document.getElementById('analyze-btn').textContent = '분석 시작';
-    } else if (event === 'done') {
-      bar.style.width = '100%';
-      msg.textContent = '분석 완료! 결과 페이지로 이동합니다...';
-      addLog('🏁 분석 완료!', 'success');
-      sessionStorage.setItem('analysisResult', JSON.stringify(payload.result));
-      setTimeout(() => { window.location.href = '/results'; }, 1000);
     }
   }
 

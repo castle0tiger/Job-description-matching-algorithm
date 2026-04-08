@@ -31,7 +31,10 @@
       <h1 class="text-2xl font-bold text-indigo-700">분석 결과</h1>
       <p id="jd-title" class="text-slate-500 text-sm mt-0.5"></p>
     </div>
-    <a href="/" class="text-sm text-indigo-600 hover:underline">← 새로 분석하기</a>
+    <div class="flex gap-3 text-sm">
+      <a href="/history" class="text-slate-500 hover:underline">이력 보기</a>
+      <a href="/" class="text-indigo-600 hover:underline">← 새로 분석하기</a>
+    </div>
   </div>
 
   <!-- 요약 카드 -->
@@ -64,14 +67,29 @@
 </div>
 
 <script>
-const data = JSON.parse(sessionStorage.getItem('analysisResult') || 'null');
+async function init() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
 
-if (!data) {
-  document.getElementById('results-section').classList.add('hidden');
-  document.getElementById('no-data').classList.remove('hidden');
-} else {
-  render(data);
+  let data;
+  if (id) {
+    // 이력에서 불러오기
+    const res = await fetch(`/api/history/${id}`);
+    if (!res.ok) { data = null; } else { data = await res.json(); }
+  } else {
+    // 방금 분석한 결과 (sessionStorage)
+    data = JSON.parse(sessionStorage.getItem('analysisResult') || 'null');
+  }
+
+  if (!data) {
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('no-data').classList.remove('hidden');
+  } else {
+    render(data);
+  }
 }
+
+init();
 
 function render(d) {
   const jd = d.jd_requirements;

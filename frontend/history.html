@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>분석 이력 - JD 후보자 매칭 시스템</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+<div class="max-w-4xl mx-auto py-10 px-4">
+
+  <!-- 헤더 -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-indigo-700">분석 이력</h1>
+      <p class="text-slate-500 text-sm mt-0.5">이전 분석 결과를 다시 볼 수 있습니다</p>
+    </div>
+    <a href="/" class="text-sm text-indigo-600 hover:underline">← 새로 분석하기</a>
+  </div>
+
+  <!-- 이력 목록 -->
+  <div id="history-list" class="space-y-3"></div>
+  <div id="empty" class="hidden text-center py-20">
+    <p class="text-slate-400 text-lg">저장된 분석 이력이 없습니다.</p>
+    <a href="/" class="mt-4 inline-block text-indigo-600 hover:underline">← 분석 시작하기</a>
+  </div>
+  <div id="loading" class="text-center py-20 text-slate-400">불러오는 중...</div>
+</div>
+
+<script>
+async function load() {
+  const res = await fetch('/api/history');
+  const list = await res.json();
+  document.getElementById('loading').classList.add('hidden');
+
+  if (!list.length) {
+    document.getElementById('empty').classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('history-list').innerHTML = list.map(item => `
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex items-center justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-slate-800 truncate">
+          ${item.jd_position || '직무 미상'}
+          ${item.jd_domain ? `<span class="text-slate-400 font-normal text-sm">· ${item.jd_domain}</span>` : ''}
+        </div>
+        <div class="text-xs text-slate-400 mt-0.5">${item.created_at}</div>
+        <div class="flex gap-3 mt-2 text-sm text-slate-500">
+          <span>총 <b>${item.total_resumes}</b>명</span>
+          <span>탈락 <b class="text-red-500">${item.filtered_out_count}</b>명</span>
+          <span>분석 <b class="text-green-600">${item.analyzed_count}</b>명</span>
+        </div>
+      </div>
+      <div class="flex gap-2 shrink-0">
+        <a href="/results?id=${item.id}"
+           class="text-sm bg-indigo-600 text-white px-4 py-1.5 rounded-lg hover:bg-indigo-700">
+          결과 보기
+        </a>
+        <button onclick="del(${item.id}, this)"
+                class="text-sm bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600">
+          삭제
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function del(id, btn) {
+  if (!confirm('이 분석 이력을 삭제할까요?')) return;
+  const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    btn.closest('div.bg-white').remove();
+    if (!document.querySelector('#history-list .bg-white')) {
+      document.getElementById('empty').classList.remove('hidden');
+    }
+  }
+}
+
+load();
+</script>
+</body>
+</html>

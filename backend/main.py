@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 load_dotenv()
 
 from .analyzer import analyze_jd, analyze_resume
+from .database import delete_analysis, get_analysis, get_history, init_db, save_analysis
 from .filter import apply_filter
 from .matcher import match_candidate
 from .models import (
@@ -33,6 +34,8 @@ app.add_middleware(
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
+init_db()
+
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
@@ -42,6 +45,34 @@ async def serve_index():
 @app.get("/results", response_class=HTMLResponse)
 async def serve_results():
     return FileResponse(FRONTEND_DIR / "results.html")
+
+
+@app.get("/history", response_class=HTMLResponse)
+async def serve_history():
+    return FileResponse(FRONTEND_DIR / "history.html")
+
+
+# ── 이력 API ──────────────────────────────────────────────
+
+@app.get("/api/history")
+async def api_get_history():
+    return JSONResponse(content=get_history())
+
+
+@app.get("/api/history/{analysis_id}")
+async def api_get_analysis(analysis_id: int):
+    result = get_analysis(analysis_id)
+    if result is None:
+        return JSONResponse(status_code=404, content={"error": "분석 이력을 찾을 수 없습니다."})
+    return JSONResponse(content=result)
+
+
+@app.delete("/api/history/{analysis_id}")
+async def api_delete_analysis(analysis_id: int):
+    ok = delete_analysis(analysis_id)
+    if not ok:
+        return JSONResponse(status_code=404, content={"error": "분석 이력을 찾을 수 없습니다."})
+    return JSONResponse(content={"ok": True})
 
 
 @app.post("/api/analyze")
@@ -128,4 +159,8 @@ async def analyze(
         results=passed_results + [r for r in all_results if not r.filter_result.passed],
     )
 
-    return JSONResponse(content=final_response.model_dump())
+    result_dict = final_response.model_dump()
+    analysis_id = save_analysis(result_dict)
+    result_dict["analysis_id"] = analysis_id
+
+    return JSONResponse(content=result_dict)

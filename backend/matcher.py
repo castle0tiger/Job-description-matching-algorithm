@@ -28,7 +28,14 @@ def _extract_json(text: str) -> dict:
     raise ValueError("JSON을 찾을 수 없습니다.")
 
 
-def match_candidate(jd: JDRequirements, candidate: CandidateProfile) -> MatchResult:
+def match_candidate(
+    jd: JDRequirements,
+    candidate: CandidateProfile,
+    weight_skill: int = 40,
+    weight_experience: int = 35,
+    weight_education: int = 15,
+    weight_other: int = 10,
+) -> MatchResult:
     jd_summary = f"""
 직무: {jd.position}
 도메인: {jd.domain}
@@ -63,7 +70,7 @@ def match_candidate(jd: JDRequirements, candidate: CandidateProfile) -> MatchRes
 - skill_match_score: 필수/우대 스킬 보유 여부 (0-100)
 - experience_score: 경력 연수 및 관련 경험 적합도 (0-100)
 - education_score: 학력 요건 충족 여부 (0-100)
-- total_score: 종합 점수 (스킬 40% + 경력 35% + 학력 15% + 기타 10%)
+- total_score: 종합 점수 (스킬 {weight_skill}% + 경력 {weight_experience}% + 학력 {weight_education}% + 기타 {weight_other}%)
 
 반드시 아래 JSON 형식으로만 응답하세요:
 ```json

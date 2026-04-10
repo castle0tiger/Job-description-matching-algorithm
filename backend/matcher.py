@@ -70,12 +70,11 @@ def match_candidate(
 - skill_match_score: 필수/우대 스킬 보유 여부 (0-100)
 - experience_score: 경력 연수 및 관련 경험 적합도 (0-100)
 - education_score: 학력 요건 충족 여부 (0-100)
-- total_score: 종합 점수 (스킬 {weight_skill}% + 경력 {weight_experience}% + 학력 {weight_education}% + 기타 {weight_other}%)
+※ total_score는 별도 계산하므로 JSON에 포함하지 마세요.
 
 반드시 아래 JSON 형식으로만 응답하세요:
 ```json
 {{
-  "total_score": 85,
   "skill_match_score": 90,
   "experience_score": 80,
   "education_score": 100,
@@ -92,6 +91,19 @@ recommendation은 반드시 "적극 추천"/"추천"/"검토 필요"/"미추천"
 
     text = _call_gemini(prompt)
     data = _extract_json(text)
+
+    # total_score를 Python에서 직접 계산 (AI 계산 불신뢰)
+    skill  = data.get("skill_match_score", 0)
+    exp    = data.get("experience_score", 0)
+    edu    = data.get("education_score", 0)
+    total  = round(
+        skill * weight_skill / 100
+        + exp  * weight_experience / 100
+        + edu  * weight_education / 100
+        + ((skill + exp + edu) / 3) * weight_other / 100
+    )
+    data["total_score"] = min(total, 100)
+
     return MatchResult(
         filename=candidate.filename,
         candidate_name=candidate.name,

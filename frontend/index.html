@@ -44,10 +44,10 @@
         <svg class="mx-auto mb-2 w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
         </svg>
-        <p class="text-slate-500 text-sm">PDF 파일을 드래그하거나 클릭하여 업로드</p>
+        <p class="text-slate-500 text-sm">PDF / DOCX / PPTX 파일을 드래그하거나 클릭하여 업로드</p>
         <div id="jd-name" class="mt-2 hidden"><span class="file-chip" id="jd-chip"></span></div>
       </div>
-      <input type="file" id="jd-input" accept=".pdf" class="hidden" />
+      <input type="file" id="jd-input" accept=".pdf,.docx,.pptx,.ppt" class="hidden" />
     </div>
 
     <!-- 텍스트 입력 탭 -->
@@ -82,9 +82,10 @@
       <svg class="mx-auto mb-2 w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
       </svg>
-      <p class="text-slate-500 text-sm">PDF 파일 여러 개를 드래그하거나 클릭하여 업로드</p>
+        <p class="text-slate-500 text-sm">PDF / DOCX / PPTX 파일을 드래그하거나 클릭하여 업로드</p>
+      <p class="text-xs text-slate-400 mt-1">※ PPTX는 이미지로 삽입된 텍스트는 분석되지 않을 수 있습니다</p>
     </div>
-    <input type="file" id="resume-input" accept=".pdf" multiple class="hidden" />
+    <input type="file" id="resume-input" accept=".pdf,.docx,.pptx,.ppt" multiple class="hidden" />
     <div id="resume-list" class="flex flex-wrap gap-2 mt-3"></div>
   </div>
 
@@ -254,7 +255,8 @@
     el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
     el.addEventListener('drop', e => {
       e.preventDefault(); el.classList.remove('drag-over');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+      const allowed = ['.pdf', '.docx', '.pptx', '.ppt'];
+      const files = Array.from(e.dataTransfer.files).filter(f => allowed.some(ext => f.name.toLowerCase().endsWith(ext)));
       if (id === 'jd-drop' && files[0]) {
         jdFile = files[0];
         document.getElementById('jd-chip').textContent = '📄 ' + jdFile.name;

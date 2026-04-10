@@ -5,3 +5,5 @@ pdfplumber
 requests
 pydantic
 python-dotenv
+python-docx
+python-pptx

@@ -21,7 +21,7 @@ from .models import (
     FilterCriteria,
     JDRequirements,
 )
-from .parser import extract_text_from_pdf
+from .parser import extract_text, SUPPORTED_EXTENSIONS
 
 app = FastAPI(title="JD 후보자 매칭 시스템")
 
@@ -132,7 +132,7 @@ async def analyze(
         has_pdf = jd_file is not None and jd_file.filename
         if has_pdf:
             jd_bytes = await jd_file.read()
-            jd_text = extract_text_from_pdf(jd_bytes)
+            jd_text = extract_text(jd_bytes, jd_file.filename)
         else:
             parts = []
             if jd_text_position.strip():
@@ -161,7 +161,7 @@ async def analyze(
     # 이력서 파싱 + 필터링
     for filename, resume_bytes in resume_data:
         try:
-            resume_text = extract_text_from_pdf(resume_bytes)
+            resume_text = extract_text(resume_bytes, filename)
             profile = analyze_resume(resume_text, filename)
         except Exception as e:
             profile = CandidateProfile(filename=filename, parse_error=str(e))

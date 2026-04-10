@@ -22,17 +22,57 @@
     <a href="/history" class="absolute right-0 top-0 text-sm text-indigo-600 hover:underline">분석 이력 보기 →</a>
   </div>
 
-  <!-- JD 업로드 -->
+  <!-- JD 입력 -->
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
-    <h2 class="text-lg font-semibold text-slate-800 mb-3">① 채용공고(JD) 업로드</h2>
-    <div id="jd-drop" class="drop-zone rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('jd-input').click()">
-      <svg class="mx-auto mb-2 w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-      </svg>
-      <p class="text-slate-500 text-sm">PDF 파일을 드래그하거나 클릭하여 업로드</p>
-      <div id="jd-name" class="mt-2 hidden"><span class="file-chip" id="jd-chip"></span></div>
+    <h2 class="text-lg font-semibold text-slate-800 mb-3">① 채용공고(JD) 입력</h2>
+
+    <!-- 탭 -->
+    <div class="flex border-b border-slate-200 mb-4">
+      <button id="tab-pdf" onclick="switchJdTab('pdf')"
+        class="px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">
+        PDF 업로드
+      </button>
+      <button id="tab-text" onclick="switchJdTab('text')"
+        class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600">
+        텍스트 직접 입력
+      </button>
     </div>
-    <input type="file" id="jd-input" accept=".pdf" class="hidden" />
+
+    <!-- PDF 탭 -->
+    <div id="jd-tab-pdf">
+      <div id="jd-drop" class="drop-zone rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('jd-input').click()">
+        <svg class="mx-auto mb-2 w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-slate-500 text-sm">PDF 파일을 드래그하거나 클릭하여 업로드</p>
+        <div id="jd-name" class="mt-2 hidden"><span class="file-chip" id="jd-chip"></span></div>
+      </div>
+      <input type="file" id="jd-input" accept=".pdf" class="hidden" />
+    </div>
+
+    <!-- 텍스트 입력 탭 -->
+    <div id="jd-tab-text" class="hidden space-y-3">
+      <div>
+        <label class="text-sm font-medium text-slate-700">직무</label>
+        <input id="jd-t-position" type="text" placeholder="예: 경영지원팀 경영지원 담당자"
+          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">주요 업무</label>
+        <textarea id="jd-t-responsibilities" rows="3" placeholder="예: 예산 관리, 계약서 검토, 사내 행사 기획 등"
+          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">지원 자격</label>
+        <textarea id="jd-t-requirements" rows="3" placeholder="예: 경력 3년 이상, 대졸 이상, Excel 중급 이상"
+          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">우대사항</label>
+        <textarea id="jd-t-preferred" rows="2" placeholder="예: 협회/단체 근무 경험, 영어 가능자"
+          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+      </div>
+    </div>
   </div>
 
   <!-- 이력서 업로드 -->
@@ -159,6 +199,19 @@
 <script>
   let jdFile = null;
   let resumeFiles = [];
+  let jdMode = 'pdf'; // 'pdf' or 'text'
+
+  function switchJdTab(mode) {
+    jdMode = mode;
+    document.getElementById('jd-tab-pdf').classList.toggle('hidden', mode !== 'pdf');
+    document.getElementById('jd-tab-text').classList.toggle('hidden', mode !== 'text');
+    document.getElementById('tab-pdf').className = mode === 'pdf'
+      ? 'px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600'
+      : 'px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+    document.getElementById('tab-text').className = mode === 'text'
+      ? 'px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600'
+      : 'px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+  }
 
   // JD 파일 선택
   document.getElementById('jd-input').addEventListener('change', e => {
@@ -242,7 +295,12 @@
 
   // 분석 시작
   async function startAnalysis() {
-    if (!jdFile) return alert('JD PDF 파일을 업로드하세요.');
+    if (jdMode === 'pdf' && !jdFile) return alert('JD PDF 파일을 업로드하세요.');
+    if (jdMode === 'text' && !document.getElementById('jd-t-position').value.trim()
+        && !document.getElementById('jd-t-responsibilities').value.trim()
+        && !document.getElementById('jd-t-requirements').value.trim()) {
+      return alert('직무, 주요 업무, 지원 자격 중 하나 이상을 입력하세요.');
+    }
     if (resumeFiles.length === 0) return alert('이력서 PDF 파일을 최소 1개 이상 업로드하세요.');
 
     const btn = document.getElementById('analyze-btn');
@@ -255,7 +313,14 @@
     document.getElementById('progress-log').innerHTML = '';
 
     const formData = new FormData();
-    formData.append('jd_file', jdFile);
+    if (jdMode === 'pdf') {
+      formData.append('jd_file', jdFile);
+    } else {
+      formData.append('jd_text_position', document.getElementById('jd-t-position').value);
+      formData.append('jd_text_responsibilities', document.getElementById('jd-t-responsibilities').value);
+      formData.append('jd_text_requirements', document.getElementById('jd-t-requirements').value);
+      formData.append('jd_text_preferred', document.getElementById('jd-t-preferred').value);
+    }
     resumeFiles.forEach(f => formData.append('resume_files', f));
     formData.append('position_override', document.getElementById('f-position').value);
     formData.append('domain_override', document.getElementById('f-domain').value);

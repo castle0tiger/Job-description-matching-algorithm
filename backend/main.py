@@ -77,8 +77,12 @@ async def api_delete_analysis(analysis_id: int):
 
 @app.post("/api/analyze")
 async def analyze(
-    jd_file: UploadFile = File(...),
     resume_files: list[UploadFile] = File(...),
+    jd_file: UploadFile = File(None),
+    jd_text_position: str = Form(""),
+    jd_text_responsibilities: str = Form(""),
+    jd_text_requirements: str = Form(""),
+    jd_text_preferred: str = Form(""),
     position_override: str = Form(""),
     domain_override: str = Form(""),
     min_experience_years: str = Form(""),
@@ -121,12 +125,28 @@ async def analyze(
         min_last_salary=to_int(min_last_salary),
     )
 
-    jd_bytes = await jd_file.read()
     resume_data = [(f.filename or f"resume_{i+1}.pdf", await f.read()) for i, f in enumerate(resume_files)]
 
-    # JD 분석
+    # JD 분석 (PDF 또는 텍스트 직접 입력)
     try:
-        jd_text = extract_text_from_pdf(jd_bytes)
+        has_pdf = jd_file is not None and jd_file.filename
+        if has_pdf:
+            jd_bytes = await jd_file.read()
+            jd_text = extract_text_from_pdf(jd_bytes)
+        else:
+            parts = []
+            if jd_text_position.strip():
+                parts.append(f"[직무]\n{jd_text_position.strip()}")
+            if jd_text_responsibilities.strip():
+                parts.append(f"[주요 업무]\n{jd_text_responsibilities.strip()}")
+            if jd_text_requirements.strip():
+                parts.append(f"[지원 자격]\n{jd_text_requirements.strip()}")
+            if jd_text_preferred.strip():
+                parts.append(f"[우대사항]\n{jd_text_preferred.strip()}")
+            if not parts:
+                return JSONResponse(status_code=400, content={"error": "JD PDF 또는 텍스트 입력이 필요합니다."})
+            jd_text = "\n\n".join(parts)
+
         jd_requirements: JDRequirements = analyze_jd(jd_text)
         if position_override.strip():
             jd_requirements.position = position_override.strip()

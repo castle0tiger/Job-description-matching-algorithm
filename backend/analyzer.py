@@ -1,21 +1,36 @@
 import json
 import os
 import re
+import time
 import requests
 from .models import JDRequirements, CandidateProfile
 
 API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
 
+_RETRY_STATUS = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 3
+_RETRY_DELAY = 5  # 초
+
 
 def _call_gemini(prompt: str) -> str:
-    response = requests.post(
-        GEMINI_URL,
-        json={"contents": [{"parts": [{"text": prompt}]}]},
-        timeout=120,
-    )
-    response.raise_for_status()
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    last_error = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            response = requests.post(
+                GEMINI_URL,
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=120,
+            )
+            if response.status_code in _RETRY_STATUS:
+                raise requests.HTTPError(response=response)
+            response.raise_for_status()
+            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as e:
+            last_error = e
+            if attempt < _MAX_RETRIES - 1:
+                time.sleep(_RETRY_DELAY)
+    raise last_error
 
 
 def _extract_json(text: str) -> dict:

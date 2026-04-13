@@ -93,11 +93,11 @@
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
     <button id="filter-toggle" class="w-full flex items-center justify-between text-lg font-semibold text-slate-800" onclick="toggleFilter()">
       <span>③ 필터 조건 설정 <span class="text-sm font-normal text-slate-400">(선택사항)</span></span>
-      <svg id="filter-arrow" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg id="filter-arrow" class="w-5 h-5 text-slate-400 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
-    <div id="filter-body" class="mt-4 hidden grid grid-cols-2 gap-4">
+    <div id="filter-body" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label class="text-sm text-slate-600 font-medium">직무명 <span class="text-slate-400">(AI 추출값 덮어쓰기)</span></label>
         <input id="f-position" type="text" placeholder="예: 경영지원, 홍보기획" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
@@ -180,11 +180,11 @@
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
     <button id="weight-toggle" class="w-full flex items-center justify-between text-lg font-semibold text-slate-800" onclick="toggleWeight()">
       <span>④ 점수 가중치 설정 <span class="text-sm font-normal text-slate-400">(선택사항, 합계 100%)</span></span>
-      <svg id="weight-arrow" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg id="weight-arrow" class="w-5 h-5 text-slate-400 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
-    <div id="weight-body" class="mt-4 hidden space-y-2">
+    <div id="weight-body" class="mt-4 space-y-2">
 
       <!-- 행 템플릿: 항목명 | 설명 | 입력칸 -->
       <div class="flex items-center gap-3 py-2 border-b border-slate-100">
@@ -336,19 +336,14 @@
 
   // 필터 토글
   function toggleFilter() {
-    const body = document.getElementById('filter-body');
-    const arrow = document.getElementById('filter-arrow');
-    body.classList.toggle('hidden');
-    body.classList.toggle('grid');
-    arrow.classList.toggle('rotate-180');
+    document.getElementById('filter-body').classList.toggle('hidden');
+    document.getElementById('filter-arrow').classList.toggle('rotate-180');
   }
 
   // 가중치 토글
   function toggleWeight() {
-    const body = document.getElementById('weight-body');
-    const arrow = document.getElementById('weight-arrow');
-    body.classList.toggle('hidden');
-    arrow.classList.toggle('rotate-180');
+    document.getElementById('weight-body').classList.toggle('hidden');
+    document.getElementById('weight-arrow').classList.toggle('rotate-180');
   }
 
   // 가중치 합계 실시간 표시

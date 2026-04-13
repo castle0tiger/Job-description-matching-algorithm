@@ -85,6 +85,12 @@
   <!-- 요약 카드 -->
   <div class="grid grid-cols-4 gap-3 mb-6" id="summary-cards"></div>
 
+  <!-- 추천 등급 분포 차트 -->
+  <div id="rec-chart" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
+    <h3 class="text-sm font-semibold text-slate-600 mb-3">추천 등급 분포</h3>
+    <div id="rec-chart-bars" class="space-y-2"></div>
+  </div>
+
   <!-- 필터 탈락자 -->
   <div id="filtered-section" class="hidden mb-6">
     <details class="bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -178,6 +184,39 @@ function render(d) {
     ).join('');
   }
 
+  // 추천 등급 분포 차트
+  const matched0 = d.results.filter(r => r.filter_result.passed && r.match_result);
+  if (matched0.length > 0) {
+    const recDefs = [
+      { key: '적극 추천', color: 'bg-blue-500', textColor: 'text-blue-700' },
+      { key: '추천',     color: 'bg-green-500', textColor: 'text-green-700' },
+      { key: '검토 필요', color: 'bg-yellow-400', textColor: 'text-yellow-700' },
+      { key: '미추천',   color: 'bg-red-400',   textColor: 'text-red-700' },
+    ];
+    const recCounts = {};
+    matched0.forEach(r => {
+      const k = r.match_result.recommendation;
+      recCounts[k] = (recCounts[k] || 0) + 1;
+    });
+    const maxCount = Math.max(...Object.values(recCounts));
+    const barsHtml = recDefs
+      .filter(def => recCounts[def.key])
+      .map(def => {
+        const cnt = recCounts[def.key] || 0;
+        const pct = Math.round(cnt / matched0.length * 100);
+        const barW = Math.round(cnt / maxCount * 100);
+        return `<div class="flex items-center gap-3">
+          <div class="w-20 shrink-0 text-xs font-medium text-slate-600 text-right">${def.key}</div>
+          <div class="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+            <div class="${def.color} h-4 rounded-full transition-all" style="width:${barW}%"></div>
+          </div>
+          <div class="w-16 shrink-0 text-xs ${def.textColor} font-semibold">${cnt}명 (${pct}%)</div>
+        </div>`;
+      }).join('');
+    document.getElementById('rec-chart').classList.remove('hidden');
+    document.getElementById('rec-chart-bars').innerHTML = barsHtml;
+  }
+
   // 매칭 결과
   const matched = d.results.filter(r => r.filter_result.passed && r.match_result);
   if (matched.length === 0) {
@@ -223,7 +262,7 @@ function render(d) {
       <!-- 펼쳐지는 상세 영역 -->
       <div id="${cardId}" class="hidden">
         <!-- 세부 점수 바 -->
-        <div class="px-5 py-3 grid grid-cols-4 gap-3 text-center border-t border-slate-100">
+        <div class="px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center border-t border-slate-100">
           ${scoreBar('스킬 매칭', m.skill_match_score)}
           ${scoreBar('경력 적합', m.experience_score)}
           ${scoreBar('학력 충족', m.education_score)}
@@ -254,7 +293,7 @@ function render(d) {
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">자기소개서 종합 ${m.cover_letter_score}점</span>
           </div>
-          <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
             ${scoreBar('직무 연관성', m.cover_letter_relevance)}
             ${scoreBar('성장 가능성', m.cover_letter_growth)}
             ${scoreBar('논리성/구체성', m.cover_letter_logic)}

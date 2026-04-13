@@ -1,4 +1,4 @@
-from .models import CandidateProfile, FilterCriteria, FilterResult, EDUCATION_LEVELS
+from .models import CandidateProfile, FilterCriteria, FilterResult, EDUCATION_LEVELS, OPIC_LEVELS, TOEIC_SPEAKING_LEVELS
 
 
 def _parse_education_level(edu_text: str) -> int:
@@ -73,15 +73,22 @@ def apply_filter(profile: CandidateProfile, criteria: FilterCriteria) -> FilterR
                 f"학력 미달: 기준 {criteria.min_education} 이상, 실제 {actual}"
             )
 
-    # 필수 자격증
-    if criteria.required_certifications:
-        candidate_certs = [c.strip() for c in (profile.certifications or [])]
+    # 필수 자격 조건 (키워드 통합 검색)
+    if criteria.required_qualifications:
+        # 후보자의 모든 텍스트를 하나로 합쳐서 키워드 검색
+        candidate_text = " ".join(filter(None, [
+            " ".join(profile.certifications or []),
+            " ".join(profile.skills or []),
+            profile.career_summary or "",
+            " ".join(profile.projects or []),
+        ])).lower()
         missing = []
-        for cert in criteria.required_certifications:
-            if cert.strip() and cert.strip() not in candidate_certs:
-                missing.append(cert.strip())
+        for kw in criteria.required_qualifications:
+            kw = kw.strip()
+            if kw and kw.lower() not in candidate_text:
+                missing.append(kw)
         if missing:
-            reasons.append(f"필수 자격증 미보유: {', '.join(missing)}")
+            reasons.append(f"필수 자격 조건 미충족: {', '.join(missing)}")
 
     # 최소 전직장 연봉 (정보 없으면 통과)
     if criteria.min_last_salary is not None:
@@ -90,5 +97,27 @@ def apply_filter(profile: CandidateProfile, criteria: FilterCriteria) -> FilterR
             reasons.append(
                 f"전직장 연봉 미달: 기준 {criteria.min_last_salary}만원 이상, 실제 {salary}만원"
             )
+
+    # 토익 최소 점수 (정보 없으면 통과)
+    if criteria.min_toeic is not None:
+        score = profile.toeic_score
+        if score is not None and score < criteria.min_toeic:
+            reasons.append(f"토익 점수 미달: 기준 {criteria.min_toeic}점 이상, 실제 {score}점")
+
+    # 오픽 최소 등급 (정보 없으면 통과)
+    if criteria.min_opic:
+        grade = (profile.opic_grade or "").upper().strip()
+        min_level = OPIC_LEVELS.get(criteria.min_opic.upper(), 0)
+        candidate_level = OPIC_LEVELS.get(grade, -1)
+        if grade and candidate_level < min_level:
+            reasons.append(f"오픽 등급 미달: 기준 {criteria.min_opic} 이상, 실제 {grade}")
+
+    # 토익스피킹 최소 등급 (정보 없으면 통과)
+    if criteria.min_toeic_speaking:
+        grade = (profile.toeic_speaking_grade or "").upper().strip()
+        min_level = TOEIC_SPEAKING_LEVELS.get(criteria.min_toeic_speaking.upper(), 0)
+        candidate_level = TOEIC_SPEAKING_LEVELS.get(grade, -1)
+        if grade and candidate_level < min_level:
+            reasons.append(f"토익스피킹 등급 미달: 기준 {criteria.min_toeic_speaking} 이상, 실제 {grade}")
 
     return FilterResult(passed=len(reasons) == 0, reasons=reasons)

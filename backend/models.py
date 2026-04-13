@@ -15,9 +15,12 @@ class FilterCriteria(BaseModel):
     min_experience_years: Optional[float] = None      # 최소 경력 연수
     min_age: Optional[int] = None                     # 최소 나이
     max_age: Optional[int] = None                     # 최대 나이
-    min_education: Optional[str] = None               # 최소 학력 (고졸/전문대졸/대졸/대학원졸)
-    required_certifications: list[str] = Field(default_factory=list)  # 필수 자격증
+    min_education: Optional[str] = None               # 최소 학력
+    required_qualifications: list[str] = Field(default_factory=list)  # 필수 자격 조건 (키워드)
     min_last_salary: Optional[int] = None             # 최소 전직장 연봉 (만원)
+    min_toeic: Optional[int] = None                   # 최소 토익 점수
+    min_opic: Optional[str] = None                    # 최소 오픽 등급
+    min_toeic_speaking: Optional[str] = None          # 최소 토익스피킹 등급
 
 
 class JDRequirements(BaseModel):
@@ -46,6 +49,9 @@ class CandidateProfile(BaseModel):
     companies: Optional[list[str]] = Field(default_factory=list)
     projects: Optional[list[str]] = Field(default_factory=list)
     career_summary: Optional[str] = ""
+    toeic_score: Optional[int] = None                # 토익 점수
+    opic_grade: Optional[str] = None                 # 오픽 등급
+    toeic_speaking_grade: Optional[str] = None       # 토익스피킹 등급
     cover_letter: Optional[str] = ""                 # 자기소개서 원문 (있는 경우)
     parse_error: str = ""                             # 파싱 오류 메시지
 
@@ -94,6 +100,16 @@ class AnalysisResponse(BaseModel):
     analyzed_count: int
     results: list[CandidateResult]
 
+
+# 오픽 등급 수준 매핑 (높을수록 좋음)
+OPIC_LEVELS = {
+    "AL": 7, "IH": 6, "IM3": 5, "IM2": 4, "IM1": 3, "IL": 2, "NH": 1, "NM": 0, "NL": 0,
+}
+
+# 토익스피킹 등급 수준 매핑
+TOEIC_SPEAKING_LEVELS = {
+    "AL": 6, "IH": 5, "IL": 4, "NH": 3, "NM": 2, "NL": 1,
+}
 
 # 학력 수준 매핑 (비교용)
 EDUCATION_LEVELS = {

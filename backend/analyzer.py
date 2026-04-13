@@ -92,9 +92,13 @@ def analyze_resume(resume_text: str, filename: str = "") -> CandidateProfile:
   "companies": ["회사명1", "회사명2"],
   "projects": ["프로젝트 한 줄 설명"],
   "career_summary": "경력 3줄 요약",
+  "toeic_score": 850,
+  "opic_grade": "IH",
+  "toeic_speaking_grade": null,
   "cover_letter": "자기소개서 전체 원문 (없으면 빈 문자열)"
 }}
-```"""
+```
+toeic_score는 숫자 또는 null, opic_grade/toeic_speaking_grade는 AL/IH/IM3/IM2/IM1/IL/NH/NM/NL 중 하나 또는 null."""
     try:
         text = _call_gemini(prompt)
         data = _extract_json(text)

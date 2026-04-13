@@ -134,8 +134,44 @@
         </select>
       </div>
       <div class="col-span-2">
-        <label class="text-sm text-slate-600 font-medium">필수 자격증 <span class="text-slate-400">(쉼표로 구분)</span></label>
-        <input id="f-certs" type="text" placeholder="예: 정보처리기사, SQLD" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        <label class="text-sm text-slate-600 font-medium">필수 자격 조건 <span class="text-slate-400">(쉼표로 구분 — 자격증, 스킬, 교육 이수 등)</span></label>
+        <input id="f-certs" type="text" placeholder="예: 정보처리기사, Python, 사회복지사, AWS" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+      </div>
+
+      <!-- 영어 성적 -->
+      <div class="col-span-2 pt-2 border-t border-slate-100">
+        <div class="text-sm font-medium text-slate-700 mb-3">영어 성적 <span class="text-slate-400 font-normal">(선택사항, 정보 없으면 통과)</span></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="text-xs text-slate-600 font-medium">토익 최소 점수</label>
+            <input id="f-toeic" type="number" min="0" max="990" step="5" placeholder="예: 800"
+              class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-600 font-medium">오픽 최소 등급</label>
+            <select id="f-opic" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <option value="">선택 안 함</option>
+              <option value="AL">AL</option>
+              <option value="IH">IH</option>
+              <option value="IM3">IM3</option>
+              <option value="IM2">IM2</option>
+              <option value="IM1">IM1</option>
+              <option value="IL">IL</option>
+              <option value="NH">NH</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-600 font-medium">토익스피킹 최소 등급</label>
+            <select id="f-toeic-speaking" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <option value="">선택 안 함</option>
+              <option value="AL">AL</option>
+              <option value="IH">IH</option>
+              <option value="IL">IL</option>
+              <option value="NH">NH</option>
+              <option value="NM">NM</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -336,7 +372,10 @@
     formData.append('min_age', document.getElementById('f-min-age').value);
     formData.append('max_age', document.getElementById('f-max-age').value);
     formData.append('min_education', document.getElementById('f-edu').value);
-    formData.append('required_certifications', document.getElementById('f-certs').value);
+    formData.append('required_qualifications', document.getElementById('f-certs').value);
+    formData.append('min_toeic', document.getElementById('f-toeic').value);
+    formData.append('min_opic', document.getElementById('f-opic').value);
+    formData.append('min_toeic_speaking', document.getElementById('f-toeic-speaking').value);
     formData.append('min_last_salary', document.getElementById('f-salary').value);
     formData.append('weight_skill', document.getElementById('w-skill').value);
     formData.append('weight_experience', document.getElementById('w-experience').value);

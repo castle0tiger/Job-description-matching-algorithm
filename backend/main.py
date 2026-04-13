@@ -89,8 +89,11 @@ async def analyze(
     min_age: str = Form(""),
     max_age: str = Form(""),
     min_education: str = Form(""),
-    required_certifications: str = Form(""),
+    required_qualifications: str = Form(""),
     min_last_salary: str = Form(""),
+    min_toeic: str = Form(""),
+    min_opic: str = Form(""),
+    min_toeic_speaking: str = Form(""),
     weight_skill: str = Form("35"),
     weight_experience: str = Form("30"),
     weight_education: str = Form("15"),
@@ -117,14 +120,17 @@ async def analyze(
     w_other = to_weight(weight_other, 10)
     w_cover_letter = to_weight(weight_cover_letter, 10)
 
-    certs = [c.strip() for c in required_certifications.split(",") if c.strip()]
+    qualifications = [q.strip() for q in required_qualifications.split(",") if q.strip()]
     filter_criteria = FilterCriteria(
         min_experience_years=to_float(min_experience_years),
         min_age=to_int(min_age),
         max_age=to_int(max_age),
         min_education=min_education.strip() or None,
-        required_certifications=certs,
+        required_qualifications=qualifications,
         min_last_salary=to_int(min_last_salary),
+        min_toeic=to_int(min_toeic),
+        min_opic=min_opic.strip().upper() or None,
+        min_toeic_speaking=min_toeic_speaking.strip().upper() or None,
     )
 
     resume_data = [(f.filename or f"resume_{i+1}.pdf", await f.read()) for i, f in enumerate(resume_files)]

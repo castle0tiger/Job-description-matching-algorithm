@@ -19,20 +19,59 @@
     .rec-미추천 { background:#fee2e2; color:#991b1b; }
     details > summary { list-style: none; cursor: pointer; }
     details > summary::-webkit-details-marker { display: none; }
+
+    @media print {
+      /* 인쇄 시 숨길 요소 */
+      .no-print { display: none !important; }
+
+      /* 배경색 강제 출력 */
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      /* 여백 조정 */
+      body { background: white !important; }
+      .max-w-5xl { max-width: 100% !important; padding: 0 16px !important; }
+
+      /* 카드가 페이지 경계에서 잘리지 않도록 */
+      .bg-white { break-inside: avoid; page-break-inside: avoid; }
+
+      /* 필터 탈락자 섹션 열린 상태로 고정 */
+      details { display: block; }
+      details > summary { display: none; }
+
+      /* 인쇄용 헤더 */
+      .print-header { display: block !important; }
+    }
+
+    .print-header { display: none; }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans">
 
 <div class="max-w-5xl mx-auto py-10 px-4">
 
+  <!-- 인쇄용 헤더 (화면에서는 숨김) -->
+  <div class="print-header mb-4 pb-3 border-b border-slate-300">
+    <div class="text-xl font-bold text-slate-800">JD 후보자 매칭 시스템 — 분석 결과</div>
+    <div id="print-jd-title" class="text-sm text-slate-500 mt-1"></div>
+    <div id="print-date" class="text-xs text-slate-400 mt-0.5"></div>
+  </div>
+
   <!-- 헤더 -->
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex items-center justify-between mb-6 no-print">
     <div>
       <h1 class="text-2xl font-bold text-indigo-700">분석 결과</h1>
       <p id="jd-title" class="text-slate-500 text-sm mt-0.5"></p>
     </div>
-    <div class="flex gap-3 text-sm">
+    <div class="flex gap-3 text-sm items-center">
       <a href="/history" class="text-slate-500 hover:underline">이력 보기</a>
+      <button onclick="printResult()"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        PDF 인쇄
+      </button>
       <a href="/" class="text-indigo-600 hover:underline">← 새로 분석하기</a>
     </div>
   </div>
@@ -85,6 +124,13 @@ async function init() {
     document.getElementById('results-section').classList.add('hidden');
     document.getElementById('no-data').classList.remove('hidden');
   } else {
+    // 인쇄용 헤더 채우기
+    const jd = data.jd_requirements;
+    const titleText = `직무: ${jd.position || '-'} | 도메인: ${jd.domain || '-'}`;
+    document.getElementById('print-jd-title').textContent = titleText;
+    document.getElementById('print-date').textContent =
+      `출력일시: ${new Date().toLocaleString('ko-KR')}`;
+
     render(data);
   }
 }
@@ -222,6 +268,13 @@ function render(d) {
       </div>
     </div>`;
   }).join('');
+}
+
+function printResult() {
+  // 필터 탈락자 섹션 인쇄 전 열기
+  const details = document.querySelector('#filtered-section details');
+  if (details) details.open = true;
+  window.print();
 }
 
 function scoreBar(label, score) {

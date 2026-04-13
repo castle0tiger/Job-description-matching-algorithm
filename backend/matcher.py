@@ -17,11 +17,11 @@ def _extract_json(text: str) -> dict:
 def match_candidate(
     jd: JDRequirements,
     candidate: CandidateProfile,
-    weight_skill: int = 35,
-    weight_experience: int = 30,
-    weight_education: int = 15,
-    weight_other: int = 10,
-    weight_cover_letter: int = 10,
+    weight_skill: int = 25,
+    weight_experience: int = 25,
+    weight_education: int = 25,
+    weight_other: int = 25,
+    weight_cover_letter: int = 0,
 ) -> MatchResult:
     jd_summary = f"""
 직무: {jd.position}

@@ -94,11 +94,11 @@ async def analyze(
     min_toeic: str = Form(""),
     min_opic: str = Form(""),
     min_toeic_speaking: str = Form(""),
-    weight_skill: str = Form("35"),
-    weight_experience: str = Form("30"),
-    weight_education: str = Form("15"),
-    weight_other: str = Form("10"),
-    weight_cover_letter: str = Form("10"),
+    weight_skill: str = Form("25"),
+    weight_experience: str = Form("25"),
+    weight_education: str = Form("25"),
+    weight_other: str = Form("25"),
+    weight_cover_letter: str = Form("0"),
 ):
     def to_float(v):
         v = v.strip()
@@ -114,11 +114,11 @@ async def analyze(
         except Exception:
             return default
 
-    w_skill = to_weight(weight_skill, 35)
-    w_experience = to_weight(weight_experience, 30)
-    w_education = to_weight(weight_education, 15)
-    w_other = to_weight(weight_other, 10)
-    w_cover_letter = to_weight(weight_cover_letter, 10)
+    w_skill = to_weight(weight_skill, 25)
+    w_experience = to_weight(weight_experience, 25)
+    w_education = to_weight(weight_education, 25)
+    w_other = to_weight(weight_other, 25)
+    w_cover_letter = to_weight(weight_cover_letter, 0)
 
     qualifications = [q.strip() for q in required_qualifications.split(",") if q.strip()]
     filter_criteria = FilterCriteria(

@@ -91,7 +91,8 @@ def analyze_resume(resume_text: str, filename: str = "") -> CandidateProfile:
   "last_salary": 4500,
   "companies": ["회사명1", "회사명2"],
   "projects": ["프로젝트 한 줄 설명"],
-  "career_summary": "경력 3줄 요약"
+  "career_summary": "경력 3줄 요약",
+  "cover_letter": "자기소개서 전체 원문 (없으면 빈 문자열)"
 }}
 ```"""
     try:

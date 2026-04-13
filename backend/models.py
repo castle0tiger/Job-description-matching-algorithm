@@ -46,6 +46,7 @@ class CandidateProfile(BaseModel):
     companies: Optional[list[str]] = Field(default_factory=list)
     projects: Optional[list[str]] = Field(default_factory=list)
     career_summary: Optional[str] = ""
+    cover_letter: Optional[str] = ""                 # 자기소개서 원문 (있는 경우)
     parse_error: str = ""                             # 파싱 오류 메시지
 
     @field_validator('skills', 'certifications', 'companies', 'projects', mode='before')
@@ -67,6 +68,11 @@ class MatchResult(BaseModel):
     experience_score: int = 0
     education_score: int = 0
     domain_fit_score: int = 0        # 도메인/업종 적합도
+    cover_letter_relevance: int = 0  # 자기소개서 - 직무 연관성
+    cover_letter_growth: int = 0     # 자기소개서 - 성장 가능성
+    cover_letter_logic: int = 0      # 자기소개서 - 논리성/구체성
+    cover_letter_score: int = 0      # 자기소개서 종합 점수
+    has_cover_letter: bool = False   # 자기소개서 존재 여부
     overall_fit: str = ""            # 상/중/하
     strengths: list[str] = Field(default_factory=list)
     weaknesses: list[str] = Field(default_factory=list)

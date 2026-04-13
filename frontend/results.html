@@ -187,6 +187,22 @@ function render(d) {
         </div>
       </div>` : ''}
 
+      <!-- 자기소개서 평가 -->
+      ${m.has_cover_letter ? `
+      <div class="px-5 py-3 border-b border-slate-100">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">자기소개서 종합 ${m.cover_letter_score}점</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          ${scoreBar('직무 연관성', m.cover_letter_relevance)}
+          ${scoreBar('성장 가능성', m.cover_letter_growth)}
+          ${scoreBar('논리성/구체성', m.cover_letter_logic)}
+        </div>
+      </div>` : `
+      <div class="px-5 py-2 border-b border-slate-100">
+        <span class="text-xs text-slate-400">자기소개서 미포함</span>
+      </div>`}
+
       <!-- 강점/약점 -->
       <div class="px-5 py-3 grid grid-cols-2 gap-4 border-b border-slate-100">
         <div>

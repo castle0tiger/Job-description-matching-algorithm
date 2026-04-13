@@ -184,35 +184,60 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
-    <div id="weight-body" class="mt-4 hidden">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="text-sm text-slate-600 font-medium">스킬 매칭 (%)</label>
+    <div id="weight-body" class="mt-4 hidden space-y-2">
+
+      <!-- 행 템플릿: 항목명 | 설명 | 입력칸 -->
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">스킬 매칭</div>
+        <div class="flex-1 text-xs text-slate-400">JD에서 요구하는 필수·우대 스킬을 얼마나 보유했는가</div>
+        <div class="flex items-center gap-1 shrink-0">
           <input id="w-skill" type="number" min="0" max="100" value="35" oninput="updateWeightTotal()"
-            class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div>
-          <label class="text-sm text-slate-600 font-medium">경력 적합 (%)</label>
-          <input id="w-experience" type="number" min="0" max="100" value="30" oninput="updateWeightTotal()"
-            class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div>
-          <label class="text-sm text-slate-600 font-medium">학력 충족 (%)</label>
-          <input id="w-education" type="number" min="0" max="100" value="15" oninput="updateWeightTotal()"
-            class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div>
-          <label class="text-sm text-slate-600 font-medium">도메인 적합 (%)</label>
-          <input id="w-other" type="number" min="0" max="100" value="10" oninput="updateWeightTotal()"
-            class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div class="col-span-2">
-          <label class="text-sm text-slate-600 font-medium">자기소개서 <span class="text-slate-400">(자기소개서 미포함 이력서는 0점 처리)</span></label>
-          <input id="w-cover-letter" type="number" min="0" max="100" value="10" oninput="updateWeightTotal()"
-            class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400">%</span>
         </div>
       </div>
-      <div id="weight-total-box" class="mt-3 text-sm text-center font-medium">
+
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">경력 적합</div>
+        <div class="flex-1 text-xs text-slate-400">경력 연수와 맡았던 직무가 JD와 얼마나 유사한가</div>
+        <div class="flex items-center gap-1 shrink-0">
+          <input id="w-experience" type="number" min="0" max="100" value="30" oninput="updateWeightTotal()"
+            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400">%</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">학력 충족</div>
+        <div class="flex-1 text-xs text-slate-400">요구 학력 및 전공 관련성을 충족하는가</div>
+        <div class="flex items-center gap-1 shrink-0">
+          <input id="w-education" type="number" min="0" max="100" value="15" oninput="updateWeightTotal()"
+            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400">%</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">도메인 적합</div>
+        <div class="flex-1 text-xs text-slate-400">전 직장 업종·산업군이 JD 도메인과 얼마나 일치하는가</div>
+        <div class="flex items-center gap-1 shrink-0">
+          <input id="w-other" type="number" min="0" max="100" value="10" oninput="updateWeightTotal()"
+            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400">%</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 py-2">
+        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">자기소개서</div>
+        <div class="flex-1 text-xs text-slate-400">직무 연관성·성장 가능성·논리성 평가 (미포함 이력서는 0점)</div>
+        <div class="flex items-center gap-1 shrink-0">
+          <input id="w-cover-letter" type="number" min="0" max="100" value="10" oninput="updateWeightTotal()"
+            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400">%</span>
+        </div>
+      </div>
+
+      <div id="weight-total-box" class="mt-2 text-sm text-center font-medium pt-2 border-t border-slate-100">
         합계: <span id="weight-total" class="text-indigo-600">100</span>% — <span id="weight-status" class="text-green-600">정상</span>
       </div>
     </div>

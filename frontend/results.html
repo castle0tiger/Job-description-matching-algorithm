@@ -162,10 +162,11 @@ function render(d) {
       </div>
 
       <!-- 세부 점수 바 -->
-      <div class="px-5 py-3 grid grid-cols-3 gap-3 text-center border-b border-slate-100">
+      <div class="px-5 py-3 grid grid-cols-4 gap-3 text-center border-b border-slate-100">
         ${scoreBar('스킬 매칭', m.skill_match_score)}
         ${scoreBar('경력 적합', m.experience_score)}
         ${scoreBar('학력 충족', m.education_score)}
+        ${scoreBar('도메인 적합', m.domain_fit_score)}
       </div>
 
       <!-- 후보자 기본 정보 -->

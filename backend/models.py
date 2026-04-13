@@ -66,6 +66,7 @@ class MatchResult(BaseModel):
     skill_match_score: int = 0
     experience_score: int = 0
     education_score: int = 0
+    domain_fit_score: int = 0        # 도메인/업종 적합도
     overall_fit: str = ""            # 상/중/하
     strengths: list[str] = Field(default_factory=list)
     weaknesses: list[str] = Field(default_factory=list)

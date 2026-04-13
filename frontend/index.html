@@ -408,14 +408,21 @@
     formData.append('weight_other', document.getElementById('w-other').value);
     formData.append('weight_cover_letter', document.getElementById('w-cover-letter').value);
 
-    // 진행 애니메이션
+    // 예상 시간 계산 (이력서 1개당 약 20초)
+    const totalResumes = resumeFiles.length;
+    const estMinutes = Math.ceil(totalResumes * 20 / 60);
+    const estText = estMinutes <= 1 ? '약 1분 이내' : `약 ${estMinutes}분`;
+
+    // 진행 애니메이션 (이력서 수 기반으로 속도 조정)
+    const totalSec = totalResumes * 20 * 1000;
     let pct = 0;
     const progressTimer = setInterval(() => {
       pct = Math.min(pct + 1, 90);
       document.getElementById('progress-bar').style.width = pct + '%';
-    }, 2000);
+    }, totalSec / 90);
 
-    document.getElementById('progress-msg').textContent = 'AI가 분석 중입니다. 이력서 수에 따라 수 분 소요될 수 있습니다...';
+    document.getElementById('progress-msg').textContent =
+      `이력서 ${totalResumes}개 분석 중... (예상 소요 시간: ${estText})`;
 
     try {
       const response = await fetch('/api/analyze', { method: 'POST', body: formData });

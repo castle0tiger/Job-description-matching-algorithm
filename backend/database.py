@@ -11,25 +11,47 @@ def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS analyses (
-                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at         TEXT NOT NULL,
-                jd_position        TEXT,
-                jd_domain          TEXT,
-                total_resumes      INTEGER,
-                filtered_out_count INTEGER,
-                analyzed_count     INTEGER,
-                result_json        TEXT NOT NULL
+                id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at           TEXT NOT NULL,
+                jd_position          TEXT,
+                jd_domain            TEXT,
+                total_resumes        INTEGER,
+                filtered_out_count   INTEGER,
+                analyzed_count       INTEGER,
+                top_candidate_name   TEXT,
+                top_candidate_score  INTEGER,
+                result_json          TEXT NOT NULL
             )
         """)
+        # 기존 DB에 컬럼 추가 (이미 있으면 무시)
+        for col, typedef in [
+            ("top_candidate_name", "TEXT"),
+            ("top_candidate_score", "INTEGER"),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE analyses ADD COLUMN {col} {typedef}")
+            except sqlite3.OperationalError:
+                pass
 
 
 def save_analysis(result: dict) -> int:
     jd = result.get("jd_requirements", {})
+    # 최고 점수 후보자 추출
+    top_name = None
+    top_score = None
+    passed = [r for r in result.get("results", []) if r.get("filter_result", {}).get("passed") and r.get("match_result")]
+    if passed:
+        top = max(passed, key=lambda r: r["match_result"].get("total_score", 0))
+        p = top.get("profile", {})
+        top_name = p.get("name") or p.get("filename")
+        top_score = top["match_result"].get("total_score")
+
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute(
             """INSERT INTO analyses
-               (created_at, jd_position, jd_domain, total_resumes, filtered_out_count, analyzed_count, result_json)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               (created_at, jd_position, jd_domain, total_resumes, filtered_out_count, analyzed_count,
+                top_candidate_name, top_candidate_score, result_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 jd.get("position", ""),
@@ -37,6 +59,8 @@ def save_analysis(result: dict) -> int:
                 result.get("total_resumes", 0),
                 result.get("filtered_out_count", 0),
                 result.get("analyzed_count", 0),
+                top_name,
+                top_score,
                 json.dumps(result, ensure_ascii=False),
             ),
         )
@@ -48,7 +72,8 @@ def get_history(limit: int = 50) -> list[dict]:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             """SELECT id, created_at, jd_position, jd_domain,
-                      total_resumes, filtered_out_count, analyzed_count
+                      total_resumes, filtered_out_count, analyzed_count,
+                      top_candidate_name, top_candidate_score
                FROM analyses
                ORDER BY created_at DESC
                LIMIT ?""",

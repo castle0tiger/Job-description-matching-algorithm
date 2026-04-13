@@ -34,6 +34,12 @@
       /* 카드가 페이지 경계에서 잘리지 않도록 */
       .bg-white { break-inside: avoid; page-break-inside: avoid; }
 
+      /* 인쇄 시 모든 카드 상세 영역 펼치기 */
+      [id^="card-detail-"] { display: block !important; }
+
+      /* 펼치기/접기 화살표 숨기기 */
+      .card-chevron { display: none !important; }
+
       /* 필터 탈락자 섹션 열린 상태로 고정 */
       details { display: block; }
       details > summary { display: none; }
@@ -187,10 +193,12 @@ function render(d) {
     const fitClass = `fit-${m.overall_fit}`;
     const recClass = `rec-${m.recommendation}`;
 
+    const cardId = `card-detail-${idx}`;
     return `
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <!-- 카드 헤더 -->
-      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+      <!-- 카드 헤더 (클릭으로 펼치기/접기) -->
+      <div class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors"
+           onclick="toggleCard('${cardId}', this)">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">${idx + 1}</div>
           <div>
@@ -198,80 +206,103 @@ function render(d) {
             <div class="text-xs text-slate-400">${p.filename}</div>
           </div>
         </div>
-        <div class="text-right">
-          <div class="${scoreColor} text-3xl font-bold">${m.total_score}<span class="text-base font-normal text-slate-400">점</span></div>
-          <div class="flex gap-1 mt-1 justify-end">
-            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${fitClass}">${m.overall_fit}급</span>
-            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${recClass}">${m.recommendation}</span>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="${scoreColor} text-3xl font-bold">${m.total_score}<span class="text-base font-normal text-slate-400">점</span></div>
+            <div class="flex gap-1 mt-1 justify-end">
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium ${fitClass}">${m.overall_fit}급</span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium ${recClass}">${m.recommendation}</span>
+            </div>
+          </div>
+          <svg class="card-chevron w-5 h-5 text-slate-400 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 펼쳐지는 상세 영역 -->
+      <div id="${cardId}" class="hidden">
+        <!-- 세부 점수 바 -->
+        <div class="px-5 py-3 grid grid-cols-4 gap-3 text-center border-t border-slate-100">
+          ${scoreBar('스킬 매칭', m.skill_match_score)}
+          ${scoreBar('경력 적합', m.experience_score)}
+          ${scoreBar('학력 충족', m.education_score)}
+          ${scoreBar('도메인 적합', m.domain_fit_score)}
+        </div>
+
+        <!-- 후보자 기본 정보 -->
+        <div class="px-5 py-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500 border-t border-slate-100">
+          ${p.age ? `<span>나이: <b>${p.age}세</b></span>` : ''}
+          ${p.total_experience_years != null ? `<span>경력: <b>${p.total_experience_years}년</b></span>` : ''}
+          ${p.education ? `<span>학력: <b>${p.education}</b> ${p.education_major ? '(' + p.education_major + ')' : ''}</span>` : ''}
+          ${p.last_salary ? `<span>전직장 연봉: <b>${p.last_salary.toLocaleString()}만원</b></span>` : ''}
+          ${p.certifications?.length ? `<span>자격증: <b>${p.certifications.join(', ')}</b></span>` : ''}
+        </div>
+
+        <!-- 보유 스킬 -->
+        ${p.skills?.length ? `
+        <div class="px-5 py-3 border-t border-slate-100">
+          <div class="text-xs text-slate-400 mb-1.5">보유 스킬</div>
+          <div class="flex flex-wrap gap-1.5">
+            ${p.skills.map(s => `<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${s}</span>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- 자기소개서 평가 -->
+        ${m.has_cover_letter ? `
+        <div class="px-5 py-3 border-t border-slate-100">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">자기소개서 종합 ${m.cover_letter_score}점</span>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            ${scoreBar('직무 연관성', m.cover_letter_relevance)}
+            ${scoreBar('성장 가능성', m.cover_letter_growth)}
+            ${scoreBar('논리성/구체성', m.cover_letter_logic)}
+          </div>
+        </div>` : `
+        <div class="px-5 py-2 border-t border-slate-100">
+          <span class="text-xs text-slate-400">자기소개서 미포함</span>
+        </div>`}
+
+        <!-- 강점/약점 -->
+        <div class="px-5 py-3 grid grid-cols-2 gap-4 border-t border-slate-100">
+          <div>
+            <div class="text-xs text-slate-400 mb-1">강점</div>
+            <ul class="space-y-0.5">${(m.strengths || []).map(s => `<li class="text-sm text-green-700">✓ ${s}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 mb-1">약점</div>
+            <ul class="space-y-0.5">${(m.weaknesses || []).map(s => `<li class="text-sm text-red-600">✗ ${s}</li>`).join('')}</ul>
           </div>
         </div>
-      </div>
 
-      <!-- 세부 점수 바 -->
-      <div class="px-5 py-3 grid grid-cols-4 gap-3 text-center border-b border-slate-100">
-        ${scoreBar('스킬 매칭', m.skill_match_score)}
-        ${scoreBar('경력 적합', m.experience_score)}
-        ${scoreBar('학력 충족', m.education_score)}
-        ${scoreBar('도메인 적합', m.domain_fit_score)}
-      </div>
-
-      <!-- 후보자 기본 정보 -->
-      <div class="px-5 py-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500 border-b border-slate-100">
-        ${p.age ? `<span>나이: <b>${p.age}세</b></span>` : ''}
-        ${p.total_experience_years != null ? `<span>경력: <b>${p.total_experience_years}년</b></span>` : ''}
-        ${p.education ? `<span>학력: <b>${p.education}</b> ${p.education_major ? '(' + p.education_major + ')' : ''}</span>` : ''}
-        ${p.last_salary ? `<span>전직장 연봉: <b>${p.last_salary.toLocaleString()}만원</b></span>` : ''}
-        ${p.certifications?.length ? `<span>자격증: <b>${p.certifications.join(', ')}</b></span>` : ''}
-      </div>
-
-      <!-- 보유 스킬 -->
-      ${p.skills?.length ? `
-      <div class="px-5 py-3 border-b border-slate-100">
-        <div class="text-xs text-slate-400 mb-1.5">보유 스킬</div>
-        <div class="flex flex-wrap gap-1.5">
-          ${p.skills.map(s => `<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${s}</span>`).join('')}
+        <!-- AI 평가 의견 -->
+        <div class="px-5 py-3 border-t border-slate-100">
+          <div class="text-xs text-slate-400 mb-1">AI 평가 의견</div>
+          <p class="text-sm text-slate-600 leading-relaxed">${m.reasoning}</p>
         </div>
-      </div>` : ''}
-
-      <!-- 자기소개서 평가 -->
-      ${m.has_cover_letter ? `
-      <div class="px-5 py-3 border-b border-slate-100">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">자기소개서 종합 ${m.cover_letter_score}점</span>
-        </div>
-        <div class="grid grid-cols-3 gap-3 text-center">
-          ${scoreBar('직무 연관성', m.cover_letter_relevance)}
-          ${scoreBar('성장 가능성', m.cover_letter_growth)}
-          ${scoreBar('논리성/구체성', m.cover_letter_logic)}
-        </div>
-      </div>` : `
-      <div class="px-5 py-2 border-b border-slate-100">
-        <span class="text-xs text-slate-400">자기소개서 미포함</span>
-      </div>`}
-
-      <!-- 강점/약점 -->
-      <div class="px-5 py-3 grid grid-cols-2 gap-4 border-b border-slate-100">
-        <div>
-          <div class="text-xs text-slate-400 mb-1">강점</div>
-          <ul class="space-y-0.5">${(m.strengths || []).map(s => `<li class="text-sm text-green-700">✓ ${s}</li>`).join('')}</ul>
-        </div>
-        <div>
-          <div class="text-xs text-slate-400 mb-1">약점</div>
-          <ul class="space-y-0.5">${(m.weaknesses || []).map(s => `<li class="text-sm text-red-600">✗ ${s}</li>`).join('')}</ul>
-        </div>
-      </div>
-
-      <!-- AI 평가 의견 -->
-      <div class="px-5 py-3">
-        <div class="text-xs text-slate-400 mb-1">AI 평가 의견</div>
-        <p class="text-sm text-slate-600 leading-relaxed">${m.reasoning}</p>
       </div>
     </div>`;
   }).join('');
 }
 
+function toggleCard(id, header) {
+  const detail = document.getElementById(id);
+  const chevron = header.querySelector('.card-chevron');
+  const isHidden = detail.classList.contains('hidden');
+  detail.classList.toggle('hidden', !isHidden);
+  chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+}
+
 function printResult() {
-  // 필터 탈락자 섹션 인쇄 전 열기
+  // 모든 카드 펼치기
+  document.querySelectorAll('[id^="card-detail-"]').forEach(el => {
+    el.classList.remove('hidden');
+  });
+  document.querySelectorAll('.card-chevron').forEach(el => {
+    el.style.transform = 'rotate(180deg)';
+  });
+  // 필터 탈락자 섹션 열기
   const details = document.querySelector('#filtered-section details');
   if (details) details.open = true;
   window.print();

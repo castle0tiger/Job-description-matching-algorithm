@@ -47,10 +47,11 @@ async function load() {
           ${item.jd_domain ? `<span class="text-slate-400 font-normal text-sm">· ${item.jd_domain}</span>` : ''}
         </div>
         <div class="text-xs text-slate-400 mt-0.5">${item.created_at}</div>
-        <div class="flex gap-3 mt-2 text-sm text-slate-500">
+        <div class="flex gap-3 mt-2 text-sm text-slate-500 flex-wrap">
           <span>총 <b>${item.total_resumes}</b>명</span>
           <span>탈락 <b class="text-red-500">${item.filtered_out_count}</b>명</span>
           <span>분석 <b class="text-green-600">${item.analyzed_count}</b>명</span>
+          ${item.top_candidate_name ? `<span class="text-indigo-600">· 1위: <b>${item.top_candidate_name}</b> ${item.top_candidate_score != null ? `<span class="text-slate-400">(${item.top_candidate_score}점)</span>` : ''}</span>` : ''}
         </div>
       </div>
       <div class="flex gap-2 shrink-0">

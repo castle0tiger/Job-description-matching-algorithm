@@ -91,10 +91,11 @@ async def analyze(
     min_education: str = Form(""),
     required_certifications: str = Form(""),
     min_last_salary: str = Form(""),
-    weight_skill: str = Form("40"),
-    weight_experience: str = Form("35"),
+    weight_skill: str = Form("35"),
+    weight_experience: str = Form("30"),
     weight_education: str = Form("15"),
     weight_other: str = Form("10"),
+    weight_cover_letter: str = Form("10"),
 ):
     def to_float(v):
         v = v.strip()
@@ -110,10 +111,11 @@ async def analyze(
         except Exception:
             return default
 
-    w_skill = to_weight(weight_skill, 40)
-    w_experience = to_weight(weight_experience, 35)
+    w_skill = to_weight(weight_skill, 35)
+    w_experience = to_weight(weight_experience, 30)
     w_education = to_weight(weight_education, 15)
     w_other = to_weight(weight_other, 10)
+    w_cover_letter = to_weight(weight_cover_letter, 10)
 
     certs = [c.strip() for c in required_certifications.split(",") if c.strip()]
     filter_criteria = FilterCriteria(
@@ -183,6 +185,7 @@ async def analyze(
                 weight_experience=w_experience,
                 weight_education=w_education,
                 weight_other=w_other,
+                weight_cover_letter=w_cover_letter,
             )
             result.match_result = match_result
             analyzed_count += 1

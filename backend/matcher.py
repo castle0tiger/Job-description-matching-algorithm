@@ -17,10 +17,11 @@ def _extract_json(text: str) -> dict:
 def match_candidate(
     jd: JDRequirements,
     candidate: CandidateProfile,
-    weight_skill: int = 40,
-    weight_experience: int = 35,
+    weight_skill: int = 35,
+    weight_experience: int = 30,
     weight_education: int = 15,
     weight_other: int = 10,
+    weight_cover_letter: int = 10,
 ) -> MatchResult:
     jd_summary = f"""
 직무: {jd.position}
@@ -100,26 +101,28 @@ recommendation은 반드시 "적극 추천"/"추천"/"검토 필요"/"미추천"
     text = _call_gemini(prompt)
     data = _extract_json(text)
 
-    # total_score를 Python에서 직접 계산 (AI 계산 불신뢰)
-    skill  = data.get("skill_match_score", 0)
-    exp    = data.get("experience_score", 0)
-    edu    = data.get("education_score", 0)
-    domain = data.get("domain_fit_score", 0)
-    total  = round(
-        skill  * weight_skill       / 100
-        + exp  * weight_experience  / 100
-        + edu  * weight_education   / 100
-        + domain * weight_other     / 100
-    )
-    data["total_score"] = min(total, 100)
-
-    # 자기소개서 종합 점수 (세 항목 평균)
+    # 자기소개서 종합 점수 먼저 계산 (total_score에 반영하기 위해)
     if has_cover_letter:
         cl_r = data.get("cover_letter_relevance", 0)
         cl_g = data.get("cover_letter_growth", 0)
         cl_l = data.get("cover_letter_logic", 0)
         data["cover_letter_score"] = round((cl_r + cl_g + cl_l) / 3)
-    else:
+
+    # total_score를 Python에서 직접 계산
+    skill  = data.get("skill_match_score", 0)
+    exp    = data.get("experience_score", 0)
+    edu    = data.get("education_score", 0)
+    domain = data.get("domain_fit_score", 0)
+    cl     = data.get("cover_letter_score", 0) if has_cover_letter else 0
+    total  = round(
+        skill  * weight_skill          / 100
+        + exp  * weight_experience     / 100
+        + edu  * weight_education      / 100
+        + domain * weight_other        / 100
+        + cl   * weight_cover_letter   / 100
+    )
+    data["total_score"] = min(total, 100)
+    if not has_cover_letter:
         data["cover_letter_score"] = 0
     data["has_cover_letter"] = has_cover_letter
 

@@ -4,36 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JD 후보자 매칭 시스템</title>
+  <script>
+    (function() {
+      const s = localStorage.getItem('theme');
+      if (s === 'dark' || (!s && window.matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark');
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
   <style>
     .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.2s; }
     .drop-zone.drag-over { border-color: #6366f1; background: #eef2ff; }
+    .dark .drop-zone { border-color: #475569; }
+    .dark .drop-zone.drag-over { border-color: #818cf8; background: #1e1b4b; }
     .file-chip { display:inline-flex; align-items:center; gap:4px; background:#e0e7ff; color:#3730a3; border-radius:9999px; padding:2px 10px; font-size:13px; }
+    .dark .file-chip { background:#312e81; color:#c7d2fe; }
     .progress-bar { transition: width 0.4s ease; }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans">
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen font-sans transition-colors duration-200">
 
-<div class="max-w-3xl mx-auto py-10 px-4">
+<div class="max-w-3xl mx-auto py-8 px-4">
+
   <!-- 헤더 -->
-  <div class="mb-8 text-center relative">
-    <h1 class="text-3xl font-bold text-indigo-700">JD 후보자 매칭 시스템</h1>
-    <p class="text-slate-500 mt-1">채용공고와 이력서를 업로드하면 AI가 최적 후보자를 찾아드립니다</p>
-    <a href="/history" class="absolute right-0 top-0 text-sm text-indigo-600 hover:underline">분석 이력 보기 →</a>
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <a href="/history" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">분석 이력 보기 →</a>
+      <button onclick="toggleDark()" title="다크/라이트 모드"
+        class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+        <svg class="w-5 h-5 text-slate-500 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+        <svg class="w-5 h-5 text-yellow-400 hidden dark:block" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.166 17.834a.75.75 0 00-1.06 1.06l1.59 1.591a.75.75 0 001.061-1.06l-1.59-1.591zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.166 6.166a.75.75 0 001.06 1.06l1.59 1.591a.75.75 0 001.061-1.06L6.166 6.166z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="text-center">
+      <h1 class="text-2xl sm:text-3xl font-bold text-indigo-700 dark:text-indigo-400">JD 후보자 매칭 시스템</h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">채용공고와 이력서를 업로드하면 AI가 최적 후보자를 찾아드립니다</p>
+    </div>
   </div>
 
   <!-- JD 입력 -->
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
-    <h2 class="text-lg font-semibold text-slate-800 mb-3">① 채용공고(JD) 입력</h2>
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-4">
+    <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">① 채용공고(JD) 입력</h2>
 
     <!-- 탭 -->
-    <div class="flex border-b border-slate-200 mb-4">
+    <div class="flex border-b border-slate-200 dark:border-slate-700 mb-4">
       <button id="tab-pdf" onclick="switchJdTab('pdf')"
-        class="px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">
+        class="px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
         PDF 업로드
       </button>
       <button id="tab-text" onclick="switchJdTab('text')"
-        class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600">
+        class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
         텍스트 직접 입력
       </button>
     </div>
@@ -41,10 +66,10 @@
     <!-- PDF 탭 -->
     <div id="jd-tab-pdf">
       <div id="jd-drop" class="drop-zone rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('jd-input').click()">
-        <svg class="mx-auto mb-2 w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mx-auto mb-2 w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
         </svg>
-        <p class="text-slate-500 text-sm">PDF / DOCX / PPTX 파일을 드래그하거나 클릭하여 업로드</p>
+        <p class="text-slate-500 dark:text-slate-400 text-sm">PDF / DOCX / PPTX 파일을 드래그하거나 클릭하여 업로드</p>
         <div id="jd-name" class="mt-2 hidden"><span class="file-chip" id="jd-chip"></span></div>
       </div>
       <input type="file" id="jd-input" accept=".pdf,.docx,.pptx,.ppt" class="hidden" />
@@ -53,78 +78,85 @@
     <!-- 텍스트 입력 탭 -->
     <div id="jd-tab-text" class="hidden space-y-3">
       <div>
-        <label class="text-sm font-medium text-slate-700">직무</label>
+        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">직무</label>
         <input id="jd-t-position" type="text" placeholder="예: 경영지원팀 경영지원 담당자"
-          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
       <div>
-        <label class="text-sm font-medium text-slate-700">주요 업무</label>
+        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">주요 업무</label>
         <textarea id="jd-t-responsibilities" rows="3" placeholder="예: 예산 관리, 계약서 검토, 사내 행사 기획 등"
-          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
       </div>
       <div>
-        <label class="text-sm font-medium text-slate-700">지원 자격</label>
+        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">지원 자격</label>
         <textarea id="jd-t-requirements" rows="3" placeholder="예: 경력 3년 이상, 대졸 이상, Excel 중급 이상"
-          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
       </div>
       <div>
-        <label class="text-sm font-medium text-slate-700">우대사항</label>
+        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">우대사항</label>
         <textarea id="jd-t-preferred" rows="2" placeholder="예: 협회/단체 근무 경험, 영어 가능자"
-          class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
       </div>
     </div>
   </div>
 
   <!-- 이력서 업로드 -->
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
-    <h2 class="text-lg font-semibold text-slate-800 mb-3">② 이력서 업로드 <span class="text-sm font-normal text-slate-400">(최대 30개)</span></h2>
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-4">
+    <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">② 이력서 업로드 <span class="text-sm font-normal text-slate-400 dark:text-slate-500">(최대 30개)</span></h2>
     <div id="resume-drop" class="drop-zone rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('resume-input').click()">
-      <svg class="mx-auto mb-2 w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="mx-auto mb-2 w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
       </svg>
-        <p class="text-slate-500 text-sm">PDF / DOCX / PPTX 파일을 드래그하거나 클릭하여 업로드</p>
-      <p class="text-xs text-slate-400 mt-1">※ PPTX는 이미지로 삽입된 텍스트는 분석되지 않을 수 있습니다</p>
+      <p class="text-slate-500 dark:text-slate-400 text-sm">PDF / DOCX / PPTX 파일을 드래그하거나 클릭하여 업로드</p>
+      <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">※ PPTX는 이미지로 삽입된 텍스트는 분석되지 않을 수 있습니다</p>
     </div>
     <input type="file" id="resume-input" accept=".pdf,.docx,.pptx,.ppt" multiple class="hidden" />
     <div id="resume-list" class="flex flex-wrap gap-2 mt-3"></div>
   </div>
 
   <!-- 필터 조건 설정 -->
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
-    <button id="filter-toggle" class="w-full flex items-center justify-between text-lg font-semibold text-slate-800" onclick="toggleFilter()">
-      <span>③ 필터 조건 설정 <span class="text-sm font-normal text-slate-400">(선택사항)</span></span>
-      <svg id="filter-arrow" class="w-5 h-5 text-slate-400 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-4">
+    <button id="filter-toggle" class="w-full flex items-center justify-between text-lg font-semibold text-slate-800 dark:text-slate-100" onclick="toggleFilter()">
+      <span>③ 필터 조건 설정 <span class="text-sm font-normal text-slate-400 dark:text-slate-500">(선택사항)</span></span>
+      <svg id="filter-arrow" class="w-5 h-5 text-slate-400 dark:text-slate-500 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
     <div id="filter-body" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
-        <label class="text-sm text-slate-600 font-medium">직무명 <span class="text-slate-400">(AI 추출값 덮어쓰기)</span></label>
-        <input id="f-position" type="text" placeholder="예: 경영지원, 홍보기획" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">직무명 <span class="text-slate-400 dark:text-slate-500">(AI 추출값 덮어쓰기)</span></label>
+        <input id="f-position" type="text" placeholder="예: 경영지원, 홍보기획"
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
       <div>
-        <label class="text-sm text-slate-600 font-medium">도메인/업종 <span class="text-slate-400">(AI 추출값 덮어쓰기)</span></label>
-        <input id="f-domain" type="text" placeholder="예: 협회, IT, 금융" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">도메인/업종 <span class="text-slate-400 dark:text-slate-500">(AI 추출값 덮어쓰기)</span></label>
+        <input id="f-domain" type="text" placeholder="예: 협회, IT, 금융"
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
       <div>
-        <label class="text-sm text-slate-600 font-medium">최소 경력 (년)</label>
-        <input id="f-exp" type="number" min="0" step="0.5" placeholder="예: 3" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">최소 경력 (년)</label>
+        <input id="f-exp" type="number" min="0" step="0.5" placeholder="예: 3"
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
       <div>
-        <label class="text-sm text-slate-600 font-medium">최소 연봉 (만원)</label>
-        <input id="f-salary" type="number" min="0" step="100" placeholder="예: 3000" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">최소 연봉 (만원)</label>
+        <input id="f-salary" type="number" min="0" step="100" placeholder="예: 3000"
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
       <div>
-        <label class="text-sm text-slate-600 font-medium">나이 범위</label>
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">나이 범위</label>
         <div class="flex gap-2 mt-1">
-          <input id="f-min-age" type="number" min="18" placeholder="최소" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="flex items-center text-slate-400">~</span>
-          <input id="f-max-age" type="number" placeholder="최대" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <input id="f-min-age" type="number" min="18" placeholder="최소"
+            class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="flex items-center text-slate-400 dark:text-slate-500">~</span>
+          <input id="f-max-age" type="number" placeholder="최대"
+            class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
       </div>
       <div>
-        <label class="text-sm text-slate-600 font-medium">최소 학력</label>
-        <select id="f-edu" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">최소 학력</label>
+        <select id="f-edu"
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300">
           <option value="">선택 안 함</option>
           <option value="고졸">고등학교 졸업 이상</option>
           <option value="전문대졸">전문학사 졸업 이상</option>
@@ -133,23 +165,25 @@
           <option value="박사">박사 졸업 이상</option>
         </select>
       </div>
-      <div class="col-span-2">
-        <label class="text-sm text-slate-600 font-medium">필수 자격 조건 <span class="text-slate-400">(쉼표로 구분 — 자격증, 스킬, 교육 이수 등)</span></label>
-        <input id="f-certs" type="text" placeholder="예: 정보처리기사, Python, 사회복지사, AWS" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+      <div class="col-span-1 sm:col-span-2">
+        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">필수 자격 조건 <span class="text-slate-400 dark:text-slate-500">(쉼표로 구분 — 자격증, 스킬, 교육 이수 등)</span></label>
+        <input id="f-certs" type="text" placeholder="예: 정보처리기사, Python, 사회복지사, AWS"
+          class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
 
       <!-- 영어 성적 -->
-      <div class="col-span-2 pt-2 border-t border-slate-100">
-        <div class="text-sm font-medium text-slate-700 mb-3">영어 성적 <span class="text-slate-400 font-normal">(선택사항, 정보 없으면 통과)</span></div>
-        <div class="grid grid-cols-3 gap-4">
+      <div class="col-span-1 sm:col-span-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+        <div class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">영어 성적 <span class="text-slate-400 dark:text-slate-500 font-normal">(선택사항, 정보 없으면 통과)</span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="text-xs text-slate-600 font-medium">토익 최소 점수</label>
+            <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">토익 최소 점수</label>
             <input id="f-toeic" type="number" min="0" max="990" step="5" placeholder="예: 800"
-              class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
           <div>
-            <label class="text-xs text-slate-600 font-medium">오픽 최소 등급</label>
-            <select id="f-opic" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">오픽 최소 등급</label>
+            <select id="f-opic"
+              class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300">
               <option value="">선택 안 함</option>
               <option value="AL">AL</option>
               <option value="IH">IH</option>
@@ -161,8 +195,9 @@
             </select>
           </div>
           <div>
-            <label class="text-xs text-slate-600 font-medium">토익스피킹 최소 등급</label>
-            <select id="f-toeic-speaking" class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">토익스피킹 최소 등급</label>
+            <select id="f-toeic-speaking"
+              class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300">
               <option value="">선택 안 함</option>
               <option value="AL">AL</option>
               <option value="IH">IH</option>
@@ -177,86 +212,86 @@
   </div>
 
   <!-- 점수 가중치 설정 -->
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
-    <button id="weight-toggle" class="w-full flex items-center justify-between text-lg font-semibold text-slate-800" onclick="toggleWeight()">
-      <span>④ 점수 가중치 설정 <span class="text-sm font-normal text-slate-400">(선택사항, 합계 100%)</span></span>
-      <svg id="weight-arrow" class="w-5 h-5 text-slate-400 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-4">
+    <button id="weight-toggle" class="w-full flex items-center justify-between text-lg font-semibold text-slate-800 dark:text-slate-100" onclick="toggleWeight()">
+      <span>④ 점수 가중치 설정 <span class="text-sm font-normal text-slate-400 dark:text-slate-500">(선택사항, 합계 100%)</span></span>
+      <svg id="weight-arrow" class="w-5 h-5 text-slate-400 dark:text-slate-500 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
     <div id="weight-body" class="mt-4 space-y-2">
 
-      <!-- 행 템플릿: 항목명 | 설명 | 입력칸 -->
-      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
-        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">스킬 매칭</div>
-        <div class="flex-1 text-xs text-slate-400">JD에서 요구하는 필수·우대 스킬을 얼마나 보유했는가</div>
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-700">
+        <div class="w-24 sm:w-28 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">스킬 매칭</div>
+        <div class="flex-1 text-xs text-slate-400 dark:text-slate-500 hidden sm:block">JD에서 요구하는 필수·우대 스킬을 얼마나 보유했는가</div>
         <div class="flex items-center gap-1 shrink-0">
           <input id="w-skill" type="number" min="0" max="100" value="25" oninput="updateWeightTotal()"
-            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="text-xs text-slate-400">%</span>
+            class="w-16 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400 dark:text-slate-500">%</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
-        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">경력 적합</div>
-        <div class="flex-1 text-xs text-slate-400">경력 연수와 맡았던 직무가 JD와 얼마나 유사한가</div>
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-700">
+        <div class="w-24 sm:w-28 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">경력 적합</div>
+        <div class="flex-1 text-xs text-slate-400 dark:text-slate-500 hidden sm:block">경력 연수와 맡았던 직무가 JD와 얼마나 유사한가</div>
         <div class="flex items-center gap-1 shrink-0">
           <input id="w-experience" type="number" min="0" max="100" value="25" oninput="updateWeightTotal()"
-            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="text-xs text-slate-400">%</span>
+            class="w-16 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400 dark:text-slate-500">%</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
-        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">학력 충족</div>
-        <div class="flex-1 text-xs text-slate-400">요구 학력 및 전공 관련성을 충족하는가</div>
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-700">
+        <div class="w-24 sm:w-28 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">학력 충족</div>
+        <div class="flex-1 text-xs text-slate-400 dark:text-slate-500 hidden sm:block">요구 학력 및 전공 관련성을 충족하는가</div>
         <div class="flex items-center gap-1 shrink-0">
           <input id="w-education" type="number" min="0" max="100" value="25" oninput="updateWeightTotal()"
-            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="text-xs text-slate-400">%</span>
+            class="w-16 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400 dark:text-slate-500">%</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-3 py-2 border-b border-slate-100">
-        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">도메인 적합</div>
-        <div class="flex-1 text-xs text-slate-400">전 직장 업종·산업군이 JD 도메인과 얼마나 일치하는가</div>
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-700">
+        <div class="w-24 sm:w-28 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">도메인 적합</div>
+        <div class="flex-1 text-xs text-slate-400 dark:text-slate-500 hidden sm:block">전 직장 업종·산업군이 JD 도메인과 얼마나 일치하는가</div>
         <div class="flex items-center gap-1 shrink-0">
           <input id="w-other" type="number" min="0" max="100" value="25" oninput="updateWeightTotal()"
-            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="text-xs text-slate-400">%</span>
+            class="w-16 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400 dark:text-slate-500">%</span>
         </div>
       </div>
 
       <div class="flex items-center gap-3 py-2">
-        <div class="w-28 shrink-0 text-sm font-semibold text-slate-700">자기소개서</div>
-        <div class="flex-1 text-xs text-slate-400">직무 연관성·성장 가능성·논리성 평가 (미포함 이력서는 0점)</div>
+        <div class="w-24 sm:w-28 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">자기소개서</div>
+        <div class="flex-1 text-xs text-slate-400 dark:text-slate-500 hidden sm:block">직무 연관성·성장 가능성·논리성 평가 (미포함 이력서는 0점)</div>
         <div class="flex items-center gap-1 shrink-0">
           <input id="w-cover-letter" type="number" min="0" max="100" value="0" oninput="updateWeightTotal()"
-            class="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="text-xs text-slate-400">%</span>
+            class="w-16 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <span class="text-xs text-slate-400 dark:text-slate-500">%</span>
         </div>
       </div>
 
-      <div id="weight-total-box" class="mt-2 text-sm text-center font-medium pt-2 border-t border-slate-100">
-        합계: <span id="weight-total" class="text-indigo-600">100</span>% — <span id="weight-status" class="text-green-600">정상</span>
+      <div id="weight-total-box" class="mt-2 text-sm text-center font-medium pt-2 border-t border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+        합계: <span id="weight-total" class="text-indigo-600 dark:text-indigo-400">100</span>% —
+        <span id="weight-status" class="text-green-600 dark:text-green-400">정상</span>
       </div>
     </div>
   </div>
 
   <!-- 분석 버튼 -->
   <button id="analyze-btn" onclick="startAnalysis()"
-    class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-base transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+    class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-base transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
     분석 시작
   </button>
 
   <!-- 진행 상황 -->
-  <div id="progress-section" class="hidden mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-    <h3 class="font-semibold text-slate-700 mb-3">진행 상황</h3>
-    <div class="w-full bg-slate-100 rounded-full h-3 mb-3">
+  <div id="progress-section" class="hidden mt-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+    <h3 class="font-semibold text-slate-700 dark:text-slate-200 mb-3">진행 상황</h3>
+    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 mb-3">
       <div id="progress-bar" class="progress-bar bg-indigo-500 h-3 rounded-full" style="width:0%"></div>
     </div>
-    <p id="progress-msg" class="text-sm text-slate-500"></p>
-    <div id="progress-log" class="mt-3 max-h-40 overflow-y-auto text-xs text-slate-400 space-y-1"></div>
+    <p id="progress-msg" class="text-sm text-slate-500 dark:text-slate-400"></p>
+    <div id="progress-log" class="mt-3 max-h-40 overflow-y-auto text-xs text-slate-400 dark:text-slate-500 space-y-1"></div>
     <a id="go-history-btn" href="/history"
        class="hidden mt-4 w-full block text-center py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-semibold text-sm">
       분석 이력에서 결과 확인하기 →
@@ -267,21 +302,24 @@
 <script>
   let jdFile = null;
   let resumeFiles = [];
-  let jdMode = 'pdf'; // 'pdf' or 'text'
+  let jdMode = 'pdf';
+
+  function toggleDark() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }
 
   function switchJdTab(mode) {
     jdMode = mode;
     document.getElementById('jd-tab-pdf').classList.toggle('hidden', mode !== 'pdf');
     document.getElementById('jd-tab-text').classList.toggle('hidden', mode !== 'text');
-    document.getElementById('tab-pdf').className = mode === 'pdf'
-      ? 'px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600'
-      : 'px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600';
-    document.getElementById('tab-text').className = mode === 'text'
-      ? 'px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600'
-      : 'px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+    const isDark = document.documentElement.classList.contains('dark');
+    const activeClass = 'px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400';
+    const inactiveClass = 'px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300';
+    document.getElementById('tab-pdf').className = mode === 'pdf' ? activeClass : inactiveClass;
+    document.getElementById('tab-text').className = mode === 'text' ? activeClass : inactiveClass;
   }
 
-  // JD 파일 선택
   document.getElementById('jd-input').addEventListener('change', e => {
     jdFile = e.target.files[0];
     if (jdFile) {
@@ -290,7 +328,6 @@
     }
   });
 
-  // 이력서 파일 선택
   document.getElementById('resume-input').addEventListener('change', e => {
     addResumeFiles(Array.from(e.target.files));
   });
@@ -315,7 +352,6 @@
     });
   }
 
-  // 드래그 앤 드롭
   ['jd-drop', 'resume-drop'].forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
@@ -334,30 +370,28 @@
     });
   });
 
-  // 필터 토글
   function toggleFilter() {
     document.getElementById('filter-body').classList.toggle('hidden');
     document.getElementById('filter-arrow').classList.toggle('rotate-180');
   }
 
-  // 가중치 토글
   function toggleWeight() {
     document.getElementById('weight-body').classList.toggle('hidden');
     document.getElementById('weight-arrow').classList.toggle('rotate-180');
   }
 
-  // 가중치 합계 실시간 표시
   function updateWeightTotal() {
     const total = ['w-skill','w-experience','w-education','w-other','w-cover-letter']
       .reduce((sum, id) => sum + (parseInt(document.getElementById(id).value) || 0), 0);
     document.getElementById('weight-total').textContent = total;
     const ok = total === 100;
     document.getElementById('weight-status').textContent = ok ? '정상' : '합계가 100이 되어야 합니다';
-    document.getElementById('weight-status').className = ok ? 'text-green-600' : 'text-red-500';
+    document.getElementById('weight-status').className = ok
+      ? 'text-green-600 dark:text-green-400'
+      : 'text-red-500 dark:text-red-400';
     document.getElementById('analyze-btn').disabled = !ok;
   }
 
-  // 분석 시작
   async function startAnalysis() {
     if (jdMode === 'pdf' && !jdFile) return alert('JD PDF 파일을 업로드하세요.');
     if (jdMode === 'text' && !document.getElementById('jd-t-position').value.trim()
@@ -403,12 +437,9 @@
     formData.append('weight_other', document.getElementById('w-other').value);
     formData.append('weight_cover_letter', document.getElementById('w-cover-letter').value);
 
-    // 예상 시간 계산 (이력서 1개당 약 20초)
     const totalResumes = resumeFiles.length;
     const estMinutes = Math.ceil(totalResumes * 20 / 60);
     const estText = estMinutes <= 1 ? '약 1분 이내' : `약 ${estMinutes}분`;
-
-    // 진행 애니메이션 (이력서 수 기반으로 속도 조정)
     const totalSec = totalResumes * 20 * 1000;
     let pct = 0;
     const progressTimer = setInterval(() => {

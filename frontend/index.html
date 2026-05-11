@@ -450,6 +450,46 @@
     document.getElementById('progress-msg').textContent =
       `이력서 ${totalResumes}개 분석 중... (예상 소요 시간: ${estText})`;
 
+    // 분석 시작 전 현재 이력 개수 기록
+    let historyCountBefore = 0;
+    try {
+      const hRes = await fetch('/api/history');
+      if (hRes.ok) {
+        const hList = await hRes.json();
+        historyCountBefore = hList.length;
+      }
+    } catch (_) {}
+
+    let pollTimer = null;
+
+    function startPolling() {
+      let pollCount = 0;
+      addLog('🔄 30초마다 자동으로 결과를 확인합니다...', 'warn');
+      pollTimer = setInterval(async () => {
+        pollCount++;
+        try {
+          const hRes = await fetch('/api/history');
+          if (!hRes.ok) return;
+          const hList = await hRes.json();
+          if (hList.length > historyCountBefore) {
+            clearInterval(pollTimer);
+            const latest = hList[0];
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('progress-bar').classList.replace('bg-yellow-400', 'bg-green-500');
+            document.getElementById('progress-msg').textContent = '분석 완료! 결과 페이지로 이동합니다...';
+            addLog('✅ 분석이 완료됐습니다!', 'success');
+            setTimeout(() => { window.location.href = '/results?id=' + latest.id; }, 1000);
+          } else {
+            addLog(`🔄 확인 중... (${pollCount}회, 아직 진행 중)`, 'warn');
+            document.getElementById('progress-msg').textContent =
+              `분석이 백그라운드에서 계속 진행 중입니다. (${pollCount * 30}초 경과)`;
+          }
+        } catch (_) {
+          addLog(`⚠️ 서버 응답 없음, 재시도 중... (${pollCount}회)`, 'warn');
+        }
+      }, 30000);
+    }
+
     try {
       const response = await fetch('/api/analyze', { method: 'POST', body: formData });
       clearInterval(progressTimer);
@@ -464,23 +504,23 @@
       document.getElementById('progress-msg').textContent = '분석 완료! 결과 페이지로 이동합니다...';
       addLog('🏁 분석 완료!', 'success');
       sessionStorage.setItem('analysisResult', JSON.stringify(result));
-      setTimeout(() => { window.location.href = '/results'; }, 1000);
+      setTimeout(() => { window.location.href = '/results?id=' + result.analysis_id; }, 1000);
 
     } catch (e) {
       clearInterval(progressTimer);
-      const isTimeout = e.message.includes('timeout') || e.message.includes('byte') || e.message.includes('JSON') || e.message.includes('fetch');
+      const isTimeout = e.message.includes('timeout') || e.message.includes('byte') || e.message.includes('JSON') || e.message.includes('fetch') || e.name === 'TypeError';
       if (isTimeout) {
-        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('progress-bar').style.width = '95%';
         document.getElementById('progress-bar').classList.replace('bg-indigo-500', 'bg-yellow-400');
-        document.getElementById('progress-msg').textContent = '분석이 백그라운드에서 계속 진행 중입니다. 잠시 후 아래 버튼을 눌러 결과를 확인하세요.';
-        addLog('⏳ 서버 응답 대기 시간이 초과됐지만 분석은 계속 실행 중입니다.', 'warn');
-        addLog('✅ 완료되면 분석 이력에 자동 저장됩니다.', 'warn');
+        document.getElementById('progress-msg').textContent = '분석이 백그라운드에서 계속 진행 중입니다. 자동으로 결과를 확인하고 있습니다...';
+        addLog('⏳ 연결이 끊겼지만 서버에서 분석이 계속 실행 중입니다.', 'warn');
         document.getElementById('go-history-btn').classList.remove('hidden');
+        startPolling();
       } else {
         addLog('🚨 오류: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '분석 시작';
       }
-      btn.disabled = false;
-      btn.textContent = '분석 시작';
     }
   }
 

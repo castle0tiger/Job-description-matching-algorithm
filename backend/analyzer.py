@@ -5,7 +5,7 @@ import time
 import requests
 from .models import JDRequirements, CandidateProfile
 
-API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyBO6CSBamN_iUJL-fWoD4WcQyuPyxyDi6A"
+API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
 
 _RETRY_STATUS = {429, 500, 502, 503, 504}

@@ -27,7 +27,7 @@ app = FastAPI(title="JD 후보자 매칭 시스템")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://job-description-matching-algorithm.onrender.com"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

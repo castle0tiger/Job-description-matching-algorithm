@@ -1,3 +1,5 @@
+import asyncio
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -132,6 +134,8 @@ async def analyze(
 
     resume_data = [(f.filename or f"resume_{i+1}.pdf", await f.read()) for i, f in enumerate(resume_files)]
 
+    t_start = time.perf_counter()
+
     # JD 분석 (PDF 또는 텍스트 직접 입력)
     try:
         has_pdf = jd_file is not None and jd_file.filename
@@ -160,40 +164,73 @@ async def analyze(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"JD 분석 실패: {e}"})
 
+    t_jd = time.perf_counter()
+
     all_results: list[CandidateResult] = []
     filtered_out_count = 0
 
-    # 이력서 파싱 + 필터링
-    for filename, resume_bytes in resume_data:
-        try:
-            resume_text = extract_text(resume_bytes, filename)
-            profile = analyze_resume(resume_text, filename)
-        except Exception as e:
-            profile = CandidateProfile(filename=filename, parse_error=str(e))
+    # 동시 처리 상한 — Gemini 후불 등급은 rate limit 여유가 있으나,
+    # Render 무료 서버 보호를 위해 동시 실행 개수를 제한한다.
+    CONCURRENCY = 8
+    sem = asyncio.Semaphore(CONCURRENCY)
 
+    # 이력서 파싱 + AI 분석 (병렬 처리)
+    # requests 기반 동기 함수를 to_thread로 백그라운드 스레드에서 실행 →
+    # Gemini 응답을 기다리는 시간을 서로 겹쳐 전체 시간을 단축한다.
+    async def parse_and_analyze(filename: str, resume_bytes: bytes) -> CandidateProfile:
+        async with sem:
+            def work():
+                try:
+                    resume_text = extract_text(resume_bytes, filename)
+                    return analyze_resume(resume_text, filename)
+                except Exception as e:
+                    return CandidateProfile(filename=filename, parse_error=str(e))
+            return await asyncio.to_thread(work)
+
+    profiles = await asyncio.gather(
+        *(parse_and_analyze(fn, rb) for fn, rb in resume_data)
+    )
+
+    # 필터링 (gather는 입력 순서를 보존하므로 업로드 순서 그대로)
+    for profile in profiles:
         filter_result = apply_filter(profile, filter_criteria)
         if not filter_result.passed:
             filtered_out_count += 1
         all_results.append(CandidateResult(profile=profile, filter_result=filter_result))
 
-    # 필터 통과자 매칭
-    passed_results = [r for r in all_results if r.filter_result.passed]
-    analyzed_count = 0
+    t_parse = time.perf_counter()
 
-    for result in passed_results:
-        try:
-            match_result = match_candidate(
-                jd_requirements, result.profile,
-                weight_skill=w_skill,
-                weight_experience=w_experience,
-                weight_education=w_education,
-                weight_other=w_other,
-                weight_cover_letter=w_cover_letter,
-            )
-            result.match_result = match_result
-            analyzed_count += 1
-        except Exception:
-            pass
+    # 필터 통과자 AI 점수 산정 (병렬 처리)
+    passed_results = [r for r in all_results if r.filter_result.passed]
+
+    async def run_match(result: CandidateResult):
+        async with sem:
+            def work():
+                return match_candidate(
+                    jd_requirements, result.profile,
+                    weight_skill=w_skill,
+                    weight_experience=w_experience,
+                    weight_education=w_education,
+                    weight_other=w_other,
+                    weight_cover_letter=w_cover_letter,
+                )
+            try:
+                result.match_result = await asyncio.to_thread(work)
+            except Exception:
+                result.match_result = None
+
+    await asyncio.gather(*(run_match(r) for r in passed_results))
+    analyzed_count = sum(1 for r in passed_results if r.match_result is not None)
+
+    t_match = time.perf_counter()
+    print(
+        f"[분석 완료] 이력서 {len(resume_data)}개 | "
+        f"JD분석 {t_jd - t_start:.1f}초 | "
+        f"파싱·AI분석 {t_parse - t_jd:.1f}초 | "
+        f"점수산정 {t_match - t_parse:.1f}초 | "
+        f"총 {t_match - t_start:.1f}초 (동시 {CONCURRENCY}개)",
+        flush=True,
+    )
 
     passed_results.sort(key=lambda r: r.match_result.total_score if r.match_result else 0, reverse=True)
 

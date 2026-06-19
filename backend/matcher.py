@@ -1,17 +1,5 @@
-import json
-import re
 from .models import JDRequirements, CandidateProfile, MatchResult
-from .analyzer import _call_gemini
-
-
-def _extract_json(text: str) -> dict:
-    match = re.search(r"```json\s*([\s\S]*?)\s*```", text)
-    if match:
-        return json.loads(match.group(1))
-    match = re.search(r"\{[\s\S]*\}", text)
-    if match:
-        return json.loads(match.group(0))
-    raise ValueError("JSON을 찾을 수 없습니다.")
+from .analyzer import _call_gemini, _extract_json
 
 
 def match_candidate(

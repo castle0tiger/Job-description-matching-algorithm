@@ -1,6 +1,3 @@
-import json
-import os
-import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -21,7 +18,7 @@ from .models import (
     FilterCriteria,
     JDRequirements,
 )
-from .parser import extract_text, SUPPORTED_EXTENSIONS
+from .parser import extract_text
 
 app = FastAPI(title="JD 후보자 매칭 시스템")
 

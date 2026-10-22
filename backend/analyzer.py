@@ -6,7 +6,8 @@ import requests
 from .models import JDRequirements, CandidateProfile
 
 API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
+# 키를 URL 쿼리에 넣으면 HTTPError 메시지(→ API 응답·DB)에 그대로 노출되므로 헤더로 전달
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 _RETRY_STATUS = {429, 500, 502, 503, 504}
 _MAX_RETRIES = 3
@@ -19,6 +20,7 @@ def _call_gemini(prompt: str) -> str:
         try:
             response = requests.post(
                 GEMINI_URL,
+                headers={"x-goog-api-key": API_KEY},
                 json={"contents": [{"parts": [{"text": prompt}]}]},
                 timeout=120,
             )

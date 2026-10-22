@@ -1,4 +1,5 @@
 import io
+import threading
 import pdfplumber
 from docx import Document
 from pptx import Presentation
@@ -50,6 +51,10 @@ def extract_text_from_pptx(file_bytes: bytes) -> str:
 
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".pptx", ".ppt"}
 
+# python-docx/pptx(lxml)는 여러 스레드에서 동시에 파싱하면 간헐적으로 실패함.
+# 파싱은 수십 ms라 직렬화해도 병렬 Gemini 호출 속도에는 영향 없음.
+_OOXML_LOCK = threading.Lock()
+
 
 def extract_text(file_bytes: bytes, filename: str) -> str:
     """파일 확장자에 따라 적절한 파서를 선택합니다."""
@@ -57,8 +62,10 @@ def extract_text(file_bytes: bytes, filename: str) -> str:
     if ext == ".pdf":
         return extract_text_from_pdf(file_bytes)
     elif ext == ".docx":
-        return extract_text_from_docx(file_bytes)
+        with _OOXML_LOCK:
+            return extract_text_from_docx(file_bytes)
     elif ext in (".pptx", ".ppt"):
-        return extract_text_from_pptx(file_bytes)
+        with _OOXML_LOCK:
+            return extract_text_from_pptx(file_bytes)
     else:
         raise ValueError(f"지원하지 않는 파일 형식입니다: {ext} (지원: PDF, DOCX, PPTX)")

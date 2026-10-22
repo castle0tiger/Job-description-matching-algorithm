@@ -74,6 +74,7 @@ def analyze_resume(resume_text: str, filename: str = "") -> CandidateProfile:
     prompt = f"""다음 이력서를 분석하여 후보자 정보를 정확히 JSON 형식으로 추출하세요.
 숫자는 반드시 숫자 타입으로, 없는 정보는 null로 표기하세요.
 경력 연수는 소수점 허용 (예: 3.5), 연봉은 만원 단위 정수.
+나이·생년월일은 추출하지 말고, career_summary 등 어떤 필드에도 포함하지 마세요.
 
 이력서:
 {resume_text}
@@ -82,7 +83,6 @@ def analyze_resume(resume_text: str, filename: str = "") -> CandidateProfile:
 ```json
 {{
   "name": "홍길동",
-  "age": 30,
   "education": "대졸",
   "education_major": "컴퓨터공학",
   "total_experience_years": 5.0,

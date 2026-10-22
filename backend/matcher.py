@@ -26,7 +26,6 @@ def match_candidate(
 
     candidate_summary = f"""
 이름: {candidate.name}
-나이: {candidate.age or '미확인'}세
 학력: {candidate.education or '미확인'} ({candidate.education_major})
 경력: {candidate.total_experience_years or '미확인'}년
 보유 스킬: {', '.join(candidate.skills or [])}
@@ -67,6 +66,7 @@ def match_candidate(
 - education_score: 학력 요건 충족 여부 (0-100)
 - domain_fit_score: 후보자가 일했던 업종/산업군이 JD 도메인과 일치하는 정도 (0-100){cover_letter_criteria}
 ※ total_score는 별도 계산하므로 JSON에 포함하지 마세요.
+※ 후보자의 나이·생년은 평가에 사용하지 말고, strengths/weaknesses/reasoning에도 언급하지 마세요.
 
 반드시 아래 JSON 형식으로만 응답하세요:
 ```json

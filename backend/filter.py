@@ -54,15 +54,6 @@ def apply_filter(profile: CandidateProfile, criteria: FilterCriteria) -> FilterR
                 f"경력 미달: 기준 {criteria.min_experience_years}년 이상, 실제 {actual}"
             )
 
-    # 나이 범위 (정보 없으면 통과)
-    if criteria.min_age is not None or criteria.max_age is not None:
-        age = profile.age
-        if age is not None:
-            if criteria.min_age is not None and age < criteria.min_age:
-                reasons.append(f"나이 미달: 기준 {criteria.min_age}세 이상, 실제 {age}세")
-            if criteria.max_age is not None and age > criteria.max_age:
-                reasons.append(f"나이 초과: 기준 {criteria.max_age}세 이하, 실제 {age}세")
-
     # 최소 학력
     if criteria.min_education:
         min_level = EDUCATION_LEVELS.get(criteria.min_education, 0)

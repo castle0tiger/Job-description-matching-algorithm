@@ -13,8 +13,6 @@ def _to_list(v):
 
 class FilterCriteria(BaseModel):
     min_experience_years: Optional[float] = None      # 최소 경력 연수
-    min_age: Optional[int] = None                     # 최소 나이
-    max_age: Optional[int] = None                     # 최대 나이
     min_education: Optional[str] = None               # 최소 학력
     required_qualifications: list[str] = Field(default_factory=list)  # 필수 자격 조건 (키워드)
     min_last_salary: Optional[int] = None             # 최소 전직장 연봉 (만원)
@@ -39,7 +37,6 @@ class JDRequirements(BaseModel):
 class CandidateProfile(BaseModel):
     filename: str = ""
     name: Optional[str] = ""
-    age: Optional[int] = None
     education: Optional[str] = None
     education_major: Optional[str] = ""
     total_experience_years: Optional[float] = None

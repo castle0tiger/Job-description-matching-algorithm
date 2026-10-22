@@ -85,8 +85,6 @@ async def analyze(
     position_override: str = Form(""),
     domain_override: str = Form(""),
     min_experience_years: str = Form(""),
-    min_age: str = Form(""),
-    max_age: str = Form(""),
     min_education: str = Form(""),
     required_qualifications: str = Form(""),
     min_last_salary: str = Form(""),
@@ -122,8 +120,6 @@ async def analyze(
     qualifications = [q.strip() for q in required_qualifications.split(",") if q.strip()]
     filter_criteria = FilterCriteria(
         min_experience_years=to_float(min_experience_years),
-        min_age=to_int(min_age),
-        max_age=to_int(max_age),
         min_education=min_education.strip() or None,
         required_qualifications=qualifications,
         min_last_salary=to_int(min_last_salary),

@@ -27,7 +27,7 @@ JDcandidate_algorism/
 ├── backend/
 │   ├── main.py        # FastAPI 앱, 라우터, 분석 파이프라인 메인
 │   ├── analyzer.py    # Gemini API 호출, JD·이력서 분석 → JSON 추출
-│   ├── filter.py      # 하드 필터링 로직 (경력/나이/학력/자격/연봉/영어)
+│   ├── filter.py      # 하드 필터링 로직 (경력/학력/자격/연봉/영어)
 │   ├── matcher.py     # AI 점수 산정 (가중치 적용, total_score Python 계산)
 │   ├── models.py      # Pydantic 데이터 모델 전체 정의
 │   ├── parser.py      # 파일 텍스트 추출 (PDF/DOCX/PPTX 지원)
@@ -111,6 +111,13 @@ JDcandidate_algorism/
 - **Render URL**: `https://job-description-matching-algorithm.onrender.com`
 - Render Free 플랜 특성: 15분 비활성 시 슬립 (첫 요청에 30~50초 콜드스타트), SQLite 재시작 시 초기화 (Railway와 동일 조건)
 
+### Phase 10 — 나이 필터·나이 데이터 제거
+- **배경**: 채용 시 연령을 이유로 지원자를 거르는 것은 연령차별 소지가 있음
+- **필터 제거**: UI 나이 범위 입력, `min_age`/`max_age` 폼·모델 필드, `filter.py` 나이 판정 삭제
+- **데이터 제거**: 이력서 추출 프롬프트에서 `age` 제거, `CandidateProfile.age` 삭제, 결과 카드 나이 표시 삭제
+- **채점 차단**: 채점 프롬프트에서 나이 줄 삭제 + "나이·생년을 평가·서술에 사용하지 말 것" 지시 추가
+  (필터를 비워도 프롬프트에 나이가 들어가면 LLM 점수에 간접 반영될 수 있었음)
+
 ---
 
 ## 현재 시스템 동작 흐름
@@ -135,7 +142,8 @@ JDcandidate_algorism/
 |------|------|
 | Gemini REST API (`requests`) | Gemini SDK 불안정, 직접 HTTP 호출이 안정적 |
 | total_score를 Python에서 계산 | AI가 가중치 무시하고 자체 계산하는 문제 발생 |
-| 필터 미충족 정보(연봉, 나이, 영어)는 통과 | 이력서에 없는 정보로 탈락시키면 오탈락 발생 |
+| 필터 미충족 정보(연봉, 영어)는 통과 | 이력서에 없는 정보로 탈락시키면 오탈락 발생 |
+| 나이는 필터·추출·채점·표시 전 단계에서 제외 | 연령차별 소지, 채점 프롬프트 경유 간접 반영까지 차단 |
 | 순수 HTML/JS 프론트엔드 | Node.js 8.x 환경, React 빌드 불가 |
 | SQLite 분석 이력 | 재시작 시 초기화 (Render/Railway 무료플랜 임시 스토리지) |
 | 자기소개서 가중치 기본 0 | 자기소개서 없는 이력서가 불이익 받지 않도록 |

@@ -314,7 +314,6 @@ function render(d) {
 
         <!-- 기본 정보 -->
         <div class="px-4 sm:px-5 py-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700">
-          ${p.age ? `<span>나이: <b class="text-slate-700 dark:text-slate-200">${p.age}세</b></span>` : ''}
           ${p.total_experience_years != null ? `<span>경력: <b class="text-slate-700 dark:text-slate-200">${p.total_experience_years}년</b></span>` : ''}
           ${p.education ? `<span>학력: <b class="text-slate-700 dark:text-slate-200">${p.education}</b> ${p.education_major ? '(' + p.education_major + ')' : ''}</span>` : ''}
           ${p.last_salary ? `<span>전직장 연봉: <b class="text-slate-700 dark:text-slate-200">${p.last_salary.toLocaleString()}만원</b></span>` : ''}

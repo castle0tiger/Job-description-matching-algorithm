@@ -143,17 +143,7 @@
         <input id="f-salary" type="number" min="0" step="100" placeholder="예: 3000"
           class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
       </div>
-      <div>
-        <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">나이 범위</label>
-        <div class="flex gap-2 mt-1">
-          <input id="f-min-age" type="number" min="18" placeholder="최소"
-            class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <span class="flex items-center text-slate-400 dark:text-slate-500">~</span>
-          <input id="f-max-age" type="number" placeholder="최대"
-            class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-      </div>
-      <div>
+      <div class="col-span-1 sm:col-span-2">
         <label class="text-sm text-slate-600 dark:text-slate-300 font-medium">최소 학력</label>
         <select id="f-edu"
           class="mt-1 w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300">
@@ -423,8 +413,6 @@
     formData.append('position_override', document.getElementById('f-position').value);
     formData.append('domain_override', document.getElementById('f-domain').value);
     formData.append('min_experience_years', document.getElementById('f-exp').value);
-    formData.append('min_age', document.getElementById('f-min-age').value);
-    formData.append('max_age', document.getElementById('f-max-age').value);
     formData.append('min_education', document.getElementById('f-edu').value);
     formData.append('required_qualifications', document.getElementById('f-certs').value);
     formData.append('min_toeic', document.getElementById('f-toeic').value);

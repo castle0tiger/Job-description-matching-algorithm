@@ -118,7 +118,7 @@
 
   <!-- 매칭 결과 -->
   <div id="results-section">
-    <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">매칭 결과 (점수 순위)</h2>
+    <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">매칭 결과 (점수 순위) <span class="text-xs font-normal text-slate-400 dark:text-slate-500">같은 점수는 공동 순위로 표시</span></h2>
     <div id="results-list" class="space-y-4"></div>
   </div>
 
@@ -280,9 +280,13 @@ function render(d) {
     return;
   }
 
+  // 같은 점수는 업로드 순서로 순위가 갈리지 않도록 공동 순위로 표시 (예: 91, 91, 90 → 1, 1, 3)
+  const totals = matched.map(r => r.match_result.total_score);
   document.getElementById('results-list').innerHTML = matched.map((r, idx) => {
     const m = r.match_result;
     const p = r.profile;
+    const rank = 1 + totals.filter(s => s > m.total_score).length;
+    const isTie = totals.filter(s => s === m.total_score).length > 1;
     const scoreColor = m.total_score >= 80
       ? 'text-green-600 dark:text-green-400'
       : m.total_score >= 60
@@ -298,9 +302,9 @@ function render(d) {
       <div class="flex items-center justify-between px-4 sm:px-5 py-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
            onclick="toggleCard('${cardId}', this)">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-9 h-9 shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm">${idx + 1}</div>
+          <div class="w-9 h-9 shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm">${rank}</div>
           <div class="min-w-0">
-            <div class="font-semibold text-slate-800 dark:text-slate-100 truncate">${p.name || p.filename}</div>
+            <div class="font-semibold text-slate-800 dark:text-slate-100 truncate">${p.name || p.filename}${isTie ? `<span class="ml-1.5 align-middle text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">공동 ${rank}위</span>` : ''}</div>
             <div class="text-xs text-slate-400 dark:text-slate-500 truncate">${p.filename}</div>
           </div>
         </div>

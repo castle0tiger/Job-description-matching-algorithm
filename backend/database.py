@@ -45,6 +45,9 @@ def save_analysis(result: dict) -> int:
         p = top.get("profile", {})
         top_name = p.get("name") or p.get("filename")
         top_score = top["match_result"].get("total_score")
+        tied = sum(1 for r in passed if r["match_result"].get("total_score") == top_score) - 1
+        if tied:
+            top_name = f"{top_name} 외 {tied}명 (공동)"
 
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute(

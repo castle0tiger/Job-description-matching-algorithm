@@ -17,16 +17,16 @@
     .fit-상 { background:#d1fae5; color:#065f46; }
     .fit-중 { background:#fef3c7; color:#92400e; }
     .fit-하 { background:#fee2e2; color:#991b1b; }
-    .rec-적극\ 추천 { background:#dbeafe; color:#1e40af; }
+    .rec-적극추천 { background:#dbeafe; color:#1e40af; }
     .rec-추천 { background:#d1fae5; color:#065f46; }
-    .rec-검토\ 필요 { background:#fef9c3; color:#92400e; }
+    .rec-검토필요 { background:#fef9c3; color:#92400e; }
     .rec-미추천 { background:#fee2e2; color:#991b1b; }
     .dark .fit-상 { background:#064e3b; color:#6ee7b7; }
     .dark .fit-중 { background:#78350f; color:#fde68a; }
     .dark .fit-하 { background:#7f1d1d; color:#fca5a5; }
-    .dark .rec-적극\ 추천 { background:#1e3a8a; color:#93c5fd; }
+    .dark .rec-적극추천 { background:#1e3a8a; color:#93c5fd; }
     .dark .rec-추천 { background:#064e3b; color:#6ee7b7; }
-    .dark .rec-검토\ 필요 { background:#78350f; color:#fde68a; }
+    .dark .rec-검토필요 { background:#78350f; color:#fde68a; }
     .dark .rec-미추천 { background:#7f1d1d; color:#fca5a5; }
     details > summary { list-style: none; cursor: pointer; }
     details > summary::-webkit-details-marker { display: none; }
@@ -293,7 +293,7 @@ function render(d) {
       ? 'text-yellow-600 dark:text-yellow-400'
       : 'text-red-500 dark:text-red-400';
     const fitClass = `fit-${m.overall_fit}`;
-    const recClass = `rec-${m.recommendation}`;
+    const recClass = `rec-${(m.recommendation || '').replace(/\s/g, '')}`;  // 클래스명에 공백이 있으면 두 클래스로 쪼개짐
     const cardId = `card-detail-${idx}`;
 
     return `

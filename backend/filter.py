@@ -1,3 +1,5 @@
+import re
+
 from .models import CandidateProfile, FilterCriteria, FilterResult, EDUCATION_LEVELS, OPIC_LEVELS, TOEIC_SPEAKING_LEVELS
 
 
@@ -19,13 +21,17 @@ def _parse_education_level(edu_text: str) -> int:
     if any(k in t for k in ["석사", "대학원"]):
         return EDUCATION_LEVELS["석사"]
 
-    # 전문대
-    if any(k in t for k in ["전문대", "2년제", "3년제"]):
-        return EDUCATION_LEVELS["전문대졸"]
+    # "전문학사"·"전문대졸"이 아래 "학사"·"대졸" 키워드에 걸리지 않도록 전문대 표현을 지우고 판정.
+    # "전문학사, 학점은행제 학사"처럼 둘 다 있으면 높은 쪽(대졸)으로 본다.
+    without_college = re.sub(r"전문\s?(대학교|대학|대졸|대|학사)", "", t)
 
-    # 대졸 (4년제 대학교)
-    if any(k in t for k in ["대졸", "대학교", "대학(교)", "4년제", "학사"]):
+    # 대졸 (4년제 대학교, 학점은행제 학사 포함)
+    if any(k in without_college for k in ["대졸", "대학교", "대학(교)", "4년제", "학사"]):
         return EDUCATION_LEVELS["대졸"]
+
+    # 전문대
+    if without_college != t or any(k in t for k in ["2년제", "3년제"]):
+        return EDUCATION_LEVELS["전문대졸"]
 
     # 고졸
     if any(k in t for k in ["고졸", "고등학교", "고등"]):

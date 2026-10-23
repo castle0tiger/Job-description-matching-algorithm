@@ -109,6 +109,13 @@
     </details>
   </div>
 
+  <!-- 점수 산정 실패 (필터 통과했으나 AI 응답 오류) -->
+  <div id="match-failed-section" class="hidden mb-6 bg-amber-50 dark:bg-amber-950 rounded-2xl border border-amber-200 dark:border-amber-900 p-4">
+    <div id="match-failed-title" class="font-semibold text-amber-800 dark:text-amber-300"></div>
+    <div class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">필터는 통과했지만 AI 응답 오류로 점수를 매기지 못해 순위에서 빠졌습니다. 다시 분석해 주세요.</div>
+    <div id="match-failed-list" class="mt-2 text-sm text-amber-900 dark:text-amber-200"></div>
+  </div>
+
   <!-- 매칭 결과 -->
   <div id="results-section">
     <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">매칭 결과 (점수 순위)</h2>
@@ -221,6 +228,15 @@ function render(d) {
          </div>
        </div>`
     ).join('');
+  }
+
+  // 점수 산정 실패
+  const matchFailed = d.results.filter(r => r.filter_result.passed && !r.match_result);
+  if (matchFailed.length > 0) {
+    document.getElementById('match-failed-section').classList.remove('hidden');
+    document.getElementById('match-failed-title').textContent = `⚠ 점수 산정 실패 (${matchFailed.length}명)`;
+    document.getElementById('match-failed-list').textContent =
+      matchFailed.map(r => r.profile.name || r.profile.filename).join(', ');
   }
 
   // 추천 등급 분포 차트

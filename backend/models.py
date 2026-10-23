@@ -1,5 +1,9 @@
+import re
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
+
+# Gemini가 같은 항목을 실행마다 다른 타입으로 돌려줄 때가 있어(복수전공을 목록으로, 연봉을 "4,500만원"으로 등)
+# 검증 실패로 후보 전체가 탈락 처리되지 않도록 들어오는 값을 정규화한다.
 
 
 def _to_list(v):
@@ -9,6 +13,24 @@ def _to_list(v):
     if isinstance(v, str):
         return [v] if v.strip() else []
     return v
+
+
+def _to_text(v):
+    if isinstance(v, list):
+        return ", ".join(str(x) for x in v if x not in (None, ""))
+    return v
+
+
+def _to_number(v):
+    if isinstance(v, str):
+        m = re.search(r"\d[\d,]*(?:\.\d+)?", v)
+        return float(m.group().replace(",", "")) if m else None
+    return v
+
+
+def _to_int(v):
+    v = _to_number(v)
+    return round(v) if isinstance(v, float) else v
 
 
 class FilterCriteria(BaseModel):
@@ -33,6 +55,11 @@ class JDRequirements(BaseModel):
     key_responsibilities: list[str] = Field(default_factory=list)
     job_description: Optional[str] = ""
 
+    _lists = field_validator('required_skills', 'preferred_skills', 'required_certifications',
+                             'key_responsibilities', mode='before')(_to_list)
+    _texts = field_validator('position', 'education', 'domain', 'job_description', mode='before')(_to_text)
+    _nums = field_validator('min_experience_years', 'max_experience_years', mode='before')(_to_number)
+
 
 class CandidateProfile(BaseModel):
     filename: str = ""
@@ -52,10 +79,11 @@ class CandidateProfile(BaseModel):
     cover_letter: Optional[str] = ""                 # 자기소개서 원문 (있는 경우)
     parse_error: str = ""                             # 파싱 오류 메시지
 
-    @field_validator('skills', 'certifications', 'companies', 'projects', mode='before')
-    @classmethod
-    def coerce_to_list(cls, v):
-        return _to_list(v)
+    _lists = field_validator('skills', 'certifications', 'companies', 'projects', mode='before')(_to_list)
+    _texts = field_validator('name', 'education', 'education_major', 'career_summary', 'opic_grade',
+                             'toeic_speaking_grade', 'cover_letter', mode='before')(_to_text)
+    _floats = field_validator('total_experience_years', mode='before')(_to_number)
+    _ints = field_validator('last_salary', 'toeic_score', mode='before')(_to_int)
 
 
 class FilterResult(BaseModel):
@@ -82,11 +110,17 @@ class MatchResult(BaseModel):
     recommendation: str = ""         # 적극 추천/추천/검토 필요/미추천
     reasoning: str = ""
 
+    _lists = field_validator('strengths', 'weaknesses', mode='before')(_to_list)
+    _texts = field_validator('candidate_name', 'overall_fit', 'recommendation', 'reasoning', mode='before')(_to_text)
+    _ints = field_validator('skill_match_score', 'experience_score', 'education_score', 'domain_fit_score',
+                            'cover_letter_relevance', 'cover_letter_growth', 'cover_letter_logic', mode='before')(_to_int)
+
 
 class CandidateResult(BaseModel):
     profile: CandidateProfile
     filter_result: FilterResult
     match_result: Optional[MatchResult] = None
+    match_error: str = ""            # 필터는 통과했으나 AI 점수 산정에 실패한 경우 사유
 
 
 class AnalysisResponse(BaseModel):

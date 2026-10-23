@@ -212,8 +212,10 @@ async def analyze(
                 )
             try:
                 result.match_result = await asyncio.to_thread(work)
-            except Exception:
+            except Exception as e:
                 result.match_result = None
+                result.match_error = f"AI 점수 산정 실패 ({type(e).__name__}) — 다시 분석해 주세요"
+                print(f"[점수 산정 실패] {result.profile.filename}: {type(e).__name__}: {e}", flush=True)
 
     await asyncio.gather(*(run_match(r) for r in passed_results))
     analyzed_count = sum(1 for r in passed_results if r.match_result is not None)

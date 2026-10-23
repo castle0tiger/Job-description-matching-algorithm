@@ -10,8 +10,11 @@ API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 _RETRY_STATUS = {429, 500, 502, 503, 504}
-_MAX_RETRIES = 3
-_RETRY_DELAY = 5  # 초
+_MAX_RETRIES = 5
+_RETRY_BASE_DELAY = 2  # 초, 2→4→8→16 지수 백오프
+
+# 같은 이력서가 실행마다 다르게 추출·채점되지 않도록 샘플링 무작위성 최소화
+_GENERATION_CONFIG = {"temperature": 0, "seed": 42}
 
 
 def _call_gemini(prompt: str) -> str:
@@ -21,17 +24,19 @@ def _call_gemini(prompt: str) -> str:
             response = requests.post(
                 GEMINI_URL,
                 headers={"x-goog-api-key": API_KEY},
-                json={"contents": [{"parts": [{"text": prompt}]}]},
+                json={"contents": [{"parts": [{"text": prompt}]}], "generationConfig": _GENERATION_CONFIG},
                 timeout=120,
             )
             if response.status_code in _RETRY_STATUS:
-                raise requests.HTTPError(response=response)
+                raise requests.HTTPError(f"Gemini 일시 오류 {response.status_code}", response=response)
             response.raise_for_status()
             return response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as e:
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, KeyError, IndexError) as e:
+            if isinstance(e, requests.HTTPError) and e.response is not None and e.response.status_code not in _RETRY_STATUS:
+                raise
             last_error = e
             if attempt < _MAX_RETRIES - 1:
-                time.sleep(_RETRY_DELAY)
+                time.sleep(_RETRY_BASE_DELAY * 2 ** attempt)
     raise last_error
 
 

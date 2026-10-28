@@ -157,6 +157,8 @@ async def analyze(
             jd_requirements.position = position_override.strip()
         if domain_override.strip():
             jd_requirements.domain = domain_override.strip()
+            # 사용자가 적은 요소로 고정 — AI가 실행마다 요소를 다르게 나눠 점수가 흔들리는 것을 막음
+            jd_requirements.domain_elements = [e.strip() for e in domain_override.split(",") if e.strip()]
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"JD 분석 실패: {e}"})
 

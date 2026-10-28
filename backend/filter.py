@@ -1,5 +1,6 @@
 import re
 
+from .experience import format_months
 from .models import CandidateProfile, FilterCriteria, FilterResult, EDUCATION_LEVELS, OPIC_LEVELS, TOEIC_SPEAKING_LEVELS
 
 
@@ -53,11 +54,16 @@ def apply_filter(profile: CandidateProfile, criteria: FilterCriteria) -> FilterR
 
     # 최소 경력 연수
     if criteria.min_experience_years is not None:
-        exp = profile.total_experience_years
-        if exp is None or exp < criteria.min_experience_years:
-            actual = f"{exp}년" if exp is not None else "미확인"
+        required = round(criteria.min_experience_years * 12)
+        if profile.experience_months is not None:       # Python이 근무 기간으로 계산한 순 경력
+            months = profile.experience_months
+        elif profile.total_experience_years is not None:  # 기간을 못 읽어 AI 추정값 사용
+            months = round(profile.total_experience_years * 12)
+        else:
+            months = None
+        if months is None or months < required:
             reasons.append(
-                f"경력 미달: 기준 {criteria.min_experience_years}년 이상, 실제 {actual}"
+                f"경력 미달: 기준 {format_months(required)} 이상, 실제 {format_months(months)}"
             )
 
     # 최소 학력

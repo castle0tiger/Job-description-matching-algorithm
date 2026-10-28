@@ -1,5 +1,18 @@
 from .models import JDRequirements, CandidateProfile, MatchResult
 from .analyzer import _call_gemini, _extract_json
+from .domain import compute_domain_score
+from .experience import format_months
+
+
+def _career_lines(candidate: CandidateProfile) -> str:
+    details = candidate.career_details or [{} for _ in candidate.careers]
+    lines = []
+    for i, (c, d) in enumerate(zip(candidate.careers, details), 1):
+        period = f"{c.start or '?'} ~ {c.end or '?'}"
+        length = f" ({format_months(d['months'])})" if d.get("months") is not None else ""
+        excluded = " — 경력 연수 제외" if d and not d.get("included", True) and d.get("months") is not None else ""
+        lines.append(f"{i}. {c.company} / {c.role} / 업종: {c.industry or '미상'} / {period}{length}{excluded}")
+    return "\n".join(lines) or "없음"
 
 
 def match_candidate(
@@ -11,9 +24,11 @@ def match_candidate(
     weight_other: int = 25,
     weight_cover_letter: int = 0,
 ) -> MatchResult:
+    elements = jd.domain_elements
     jd_summary = f"""
 직무: {jd.position}
 도메인: {jd.domain}
+도메인 평가 요소: {', '.join(elements) or '없음'}
 필수 스킬: {', '.join(jd.required_skills)}
 우대 스킬: {', '.join(jd.preferred_skills)}
 최소 경력: {jd.min_experience_years}년 {'~ ' + str(jd.max_experience_years) + '년' if jd.max_experience_years else '이상'}
@@ -27,12 +42,27 @@ def match_candidate(
     candidate_summary = f"""
 이름: {candidate.name}
 학력: {candidate.education or '미확인'} ({candidate.education_major})
-경력: {candidate.total_experience_years or '미확인'}년
+순 경력: {format_months(candidate.experience_months) if candidate.experience_months is not None else (str(candidate.total_experience_years) + '년' if candidate.total_experience_years is not None else '미확인')}
 보유 스킬: {', '.join(candidate.skills or [])}
 자격증: {', '.join(candidate.certifications or []) or '없음'}
 경력 요약: {candidate.career_summary}
 프로젝트: {'; '.join((candidate.projects or [])[:3]) if candidate.projects else '없음'}
+경력 목록:
+{_career_lines(candidate)}
 """.strip()
+
+    judge_domain = bool(elements and candidate.careers)
+    domain_criteria = f"""
+
+- domain_judgments: 위 "경력 목록"의 각 경력(번호)이 도메인 평가 요소({', '.join(elements)}) 각각에 해당하는지 판정
+  · 직접: 그 분야의 조직(회사·기관)에서 일함 (예: 의료 → 병원·의료기기 회사, IT → IT·소프트웨어 회사)
+  · 간접: 다른 업종의 조직이지만 그 분야를 주로 다루는 업무를 함 (예: 헬스케어 고객사 전담 홍보대행)
+  · 없음: 해당 없음
+  · 직무 종류(사무, 행사 등)나 기관 형태(협회, 스타트업 등)가 아니라 "어떤 산업 분야에서 일했는가"만 판단하세요.
+  · 요소 이름은 위에 적힌 그대로 쓰세요.""" if judge_domain else ""
+    example_verdicts = ", ".join(f'"{e}": "직접"' for e in elements[:1]) + "".join(f', "{e}": "없음"' for e in elements[1:])
+    domain_json = f"""
+  "domain_judgments": [{{"career": 1, "verdicts": {{{example_verdicts}}}}}],""" if judge_domain else ""
 
     cover_letter_section = f"""
 === 자기소개서 ===
@@ -76,16 +106,9 @@ def match_candidate(
   · 40~55: 관련성이 낮은 업무 위주
   · 0~35: 관련 경험이 거의 없음
 
-- education_score: 학력 요건 충족 여부 (요건 충족 또는 요건 없음 = 100, 미달이면 차이에 따라 감점)
-
-- domain_fit_score: 후보자가 일한 곳의 산업 분야·기관 유형이 JD 도메인과 같은 정도 — "어디에서 일했는가"
-  · 90~100: JD와 같은 산업 분야이면서 같은 유형의 기관(예: 같은 분야의 협회·학회)에서 근무
-  · 70~85: 같은 산업 분야의 다른 유형 기관, 또는 같은 유형 기관의 인접 분야에서 근무
-  · 50~65: 산업 분야와 기관 유형 중 하나만 부분적으로 겹침
-  · 30~45: 간접적인 연관만 있음
-  · 0~25: 무관
-  · 여러 직장을 거쳤다면 가장 관련 높은 경력을 기준으로 하되, 그 경력이 1년 미만이면 한 구간 낮추세요.{cover_letter_criteria}
-※ total_score는 별도 계산하므로 JSON에 포함하지 마세요.
+- education_score: 학력 요건 충족 여부 (요건 충족 또는 요건 없음 = 100, 미달이면 차이에 따라 감점){domain_criteria}{cover_letter_criteria}
+※ 순 경력은 근무 기간을 이미 계산한 값이니 그대로 사용하세요.
+※ total_score와 도메인 점수는 별도 계산하므로 JSON에 포함하지 마세요.
 ※ 후보자의 나이·생년은 평가에 사용하지 말고, strengths/weaknesses/reasoning에도 언급하지 마세요.
 
 반드시 아래 JSON 형식으로만 응답하세요:
@@ -93,8 +116,7 @@ def match_candidate(
 {{
   "skill_match_score": 90,
   "experience_score": 80,
-  "education_score": 100,
-  "domain_fit_score": 75,{cover_letter_json}
+  "education_score": 100,{domain_json}{cover_letter_json}
   "overall_fit": "상",
   "strengths": ["강점1", "강점2", "강점3"],
   "weaknesses": ["약점1", "약점2"],
@@ -108,34 +130,31 @@ recommendation은 반드시 "적극 추천"/"추천"/"검토 필요"/"미추천"
 
     text = _call_gemini(prompt)
     data = _extract_json(text)
+    judgments = data.pop("domain_judgments", None)
+    for k in ("total_score", "cover_letter_score", "domain_fit_score", "domain_breakdown", "has_cover_letter"):
+        data.pop(k, None)   # Python이 계산하는 값은 AI 응답을 쓰지 않음
 
-    # 자기소개서 종합 점수 먼저 계산 (total_score에 반영하기 위해)
-    if has_cover_letter:
-        cl_r = data.get("cover_letter_relevance", 0)
-        cl_g = data.get("cover_letter_growth", 0)
-        cl_l = data.get("cover_letter_logic", 0)
-        data["cover_letter_score"] = round((cl_r + cl_g + cl_l) / 3)
+    # AI 응답을 모델로 먼저 정규화한 뒤("85점" → 85 등) 계산한다
+    m = MatchResult(filename=candidate.filename, candidate_name=candidate.name, **data)
 
-    # total_score를 Python에서 직접 계산
-    skill  = data.get("skill_match_score", 0)
-    exp    = data.get("experience_score", 0)
-    edu    = data.get("education_score", 0)
-    domain = data.get("domain_fit_score", 0)
-    cl     = data.get("cover_letter_score", 0) if has_cover_letter else 0
-    total  = round(
-        skill  * weight_skill          / 100
-        + exp  * weight_experience     / 100
-        + edu  * weight_education      / 100
-        + domain * weight_other        / 100
-        + cl   * weight_cover_letter   / 100
+    details = candidate.career_details or []
+    m.domain_fit_score, m.domain_breakdown = compute_domain_score(
+        elements,
+        judgments if isinstance(judgments, list) else [],
+        [d.get("months") for d in details],
+        [d.get("included", False) for d in details],
     )
-    data["total_score"] = min(total, 100)
-    if not has_cover_letter:
-        data["cover_letter_score"] = 0
-    data["has_cover_letter"] = has_cover_letter
 
-    return MatchResult(
-        filename=candidate.filename,
-        candidate_name=candidate.name,
-        **data,
+    m.has_cover_letter = has_cover_letter
+    m.cover_letter_score = (
+        round((m.cover_letter_relevance + m.cover_letter_growth + m.cover_letter_logic) / 3) if has_cover_letter else 0
     )
+    total = round(
+        m.skill_match_score * weight_skill / 100
+        + m.experience_score * weight_experience / 100
+        + m.education_score * weight_education / 100
+        + m.domain_fit_score * weight_other / 100
+        + m.cover_letter_score * weight_cover_letter / 100
+    )
+    m.total_score = min(total, 100)
+    return m

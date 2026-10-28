@@ -54,11 +54,29 @@ class JDRequirements(BaseModel):
     domain: Optional[str] = ""
     key_responsibilities: list[str] = Field(default_factory=list)
     job_description: Optional[str] = ""
+    domain_elements: list[str] = Field(default_factory=list)   # 도메인 점수 평가 요소 (업종·산업 분야만)
 
     _lists = field_validator('required_skills', 'preferred_skills', 'required_certifications',
-                             'key_responsibilities', mode='before')(_to_list)
+                             'key_responsibilities', 'domain_elements', mode='before')(_to_list)
     _texts = field_validator('position', 'education', 'domain', 'job_description', mode='before')(_to_text)
     _nums = field_validator('min_experience_years', 'max_experience_years', mode='before')(_to_number)
+
+
+class CareerEntry(BaseModel):
+    company: Optional[str] = ""
+    role: Optional[str] = ""
+    employment_type: Optional[str] = ""   # 정규직/계약직/프리랜서/인턴/아르바이트
+    industry: Optional[str] = ""          # 업종 한 줄 설명
+    start: Optional[str] = None           # "YYYY-MM" (월 모르면 "YYYY")
+    end: Optional[str] = None             # "YYYY-MM" / "YYYY" / "현재"
+
+    _texts = field_validator('company', 'role', 'employment_type', 'industry', 'start', 'end',
+                             mode='before')(_to_text)
+
+    @field_validator('start', 'end', mode='before')
+    @classmethod
+    def _num_to_text(cls, v):
+        return str(v) if isinstance(v, (int, float)) else v
 
 
 class CandidateProfile(BaseModel):
@@ -77,9 +95,14 @@ class CandidateProfile(BaseModel):
     opic_grade: Optional[str] = None                 # 오픽 등급
     toeic_speaking_grade: Optional[str] = None       # 토익스피킹 등급
     cover_letter: Optional[str] = ""                 # 자기소개서 원문 (있는 경우)
+    careers: list[CareerEntry] = Field(default_factory=list)   # 회사별 근무 기간 (AI 추출)
+    experience_months: Optional[int] = None          # 순 경력 개월 수 (Python 계산)
+    experience_note: str = ""                        # "기간 일부 추정" / "AI 추정 …"
+    career_details: list[dict] = Field(default_factory=list)   # 경력별 계산 결과
     parse_error: str = ""                             # 파싱 오류 메시지
 
-    _lists = field_validator('skills', 'certifications', 'companies', 'projects', mode='before')(_to_list)
+    _lists = field_validator('skills', 'certifications', 'companies', 'projects', 'careers',
+                             mode='before')(_to_list)
     _texts = field_validator('name', 'education', 'education_major', 'career_summary', 'opic_grade',
                              'toeic_speaking_grade', 'cover_letter', mode='before')(_to_text)
     _floats = field_validator('total_experience_years', mode='before')(_to_number)
@@ -98,7 +121,8 @@ class MatchResult(BaseModel):
     skill_match_score: int = 0
     experience_score: int = 0
     education_score: int = 0
-    domain_fit_score: int = 0        # 도메인/업종 적합도
+    domain_fit_score: int = 0        # 도메인/업종 적합도 (Python 계산)
+    domain_breakdown: list[dict] = Field(default_factory=list)  # 도메인 요소별 판정
     cover_letter_relevance: int = 0  # 자기소개서 - 직무 연관성
     cover_letter_growth: int = 0     # 자기소개서 - 성장 가능성
     cover_letter_logic: int = 0      # 자기소개서 - 논리성/구체성

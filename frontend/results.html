@@ -152,7 +152,7 @@ async function init() {
     document.getElementById('no-data').classList.remove('hidden');
   } else {
     const jd = data.jd_requirements;
-    const titleText = `직무: ${jd.position || '-'} | 도메인: ${jd.domain || '-'}`;
+    const titleText = jdTitle(jd);
     document.getElementById('print-jd-title').textContent = titleText;
     document.getElementById('print-date').textContent =
       `출력일시: ${new Date().toLocaleString('ko-KR')}`;
@@ -161,6 +161,54 @@ async function init() {
 }
 
 init();
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+}
+
+function fmtMonths(m) {
+  if (m == null) return '미확인';
+  const y = Math.floor(m / 12), r = m % 12;
+  return y && r ? `${y}년 ${r}개월` : y ? `${y}년` : `${r}개월`;
+}
+
+function jdTitle(jd) {
+  const el = jd.domain_elements?.length ? ` | 도메인 평가 요소: ${jd.domain_elements.join(', ')}` : '';
+  return `직무: ${jd.position || '-'} | 도메인: ${jd.domain || '-'}${el}`;
+}
+
+// 경력: Python이 근무 기간으로 계산한 순 경력 (예전 기록은 소수 연수만 있음)
+function expText(p) {
+  if (p.experience_months != null) return fmtMonths(p.experience_months);
+  return p.total_experience_years != null ? `${p.total_experience_years}년` : null;
+}
+
+// 도메인 요소별 판정 배지
+function domainBadges(m) {
+  if (!m.domain_breakdown?.length) return '';
+  const style = { '직접': ['✓', 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'],
+                  '간접': ['△', 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'],
+                  '없음': ['✗', 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'] };
+  return `<div class="px-4 sm:px-5 pb-3 flex flex-wrap items-center gap-1.5 text-xs">
+    <span class="text-slate-400 dark:text-slate-500">도메인 요소</span>
+    ${m.domain_breakdown.map(b => { const [icon, cls] = style[b.verdict] || style['없음'];
+      return `<span class="px-2 py-0.5 rounded-full ${cls}">${icon} ${esc(b.element)} · ${esc(b.verdict)}${b.months ? ' ' + fmtMonths(b.months) : ''}</span>`; }).join('')}
+  </div>`;
+}
+
+// 회사별 근무 기간과 합산 포함 여부
+function careerList(p) {
+  if (!p.careers?.length) return '';
+  const det = p.career_details || [];
+  return `<div class="px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-slate-700">
+    <div class="text-xs text-slate-400 dark:text-slate-500 mb-1.5">경력 사항 (순 경력 = 공백 제외, 겹친 기간은 한 번만)</div>
+    <ul class="space-y-0.5 text-sm text-slate-600 dark:text-slate-300">
+      ${p.careers.map((c, i) => { const d = det[i] || {};
+        return `<li class="${d.included === false ? 'text-slate-400 dark:text-slate-500' : ''}">· ${esc(c.company)}${c.role ? ' / ' + esc(c.role) : ''}
+          <span class="text-xs text-slate-400 dark:text-slate-500">${esc(c.start || '?')} ~ ${esc(c.end || '?')}${d.months != null ? ' (' + fmtMonths(d.months) + ')' : ''}${d.note ? ' — ' + esc(d.note) : ''}</span></li>`; }).join('')}
+    </ul>
+  </div>`;
+}
 
 function scoreBar(label, score) {
   const color = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-400' : 'bg-red-400';
@@ -176,7 +224,7 @@ function scoreBar(label, score) {
 
 function render(d) {
   const jd = d.jd_requirements;
-  document.getElementById('jd-title').textContent = `직무: ${jd.position || '-'} | 도메인: ${jd.domain || '-'}`;
+  document.getElementById('jd-title').textContent = jdTitle(jd);
 
   // 요약 카드
   const passed = d.results.filter(r => r.filter_result.passed);
@@ -331,14 +379,17 @@ function render(d) {
           ${scoreBar('학력 충족', m.education_score)}
           ${scoreBar('도메인 적합', m.domain_fit_score)}
         </div>
+        ${domainBadges(m)}
 
         <!-- 기본 정보 -->
         <div class="px-4 sm:px-5 py-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700">
-          ${p.total_experience_years != null ? `<span>경력: <b class="text-slate-700 dark:text-slate-200">${p.total_experience_years}년</b></span>` : ''}
+          ${expText(p) ? `<span>순 경력: <b class="text-slate-700 dark:text-slate-200">${expText(p)}</b>${p.experience_note ? ` <span class="text-xs text-amber-600 dark:text-amber-400">(${esc(p.experience_note)})</span>` : ''}</span>` : ''}
           ${p.education ? `<span>학력: <b class="text-slate-700 dark:text-slate-200">${p.education}</b> ${p.education_major ? '(' + p.education_major + ')' : ''}</span>` : ''}
           ${p.last_salary ? `<span>전직장 연봉: <b class="text-slate-700 dark:text-slate-200">${p.last_salary.toLocaleString()}만원</b></span>` : ''}
           ${p.certifications?.length ? `<span>자격증: <b class="text-slate-700 dark:text-slate-200">${p.certifications.join(', ')}</b></span>` : ''}
         </div>
+
+        ${careerList(p)}
 
         <!-- 보유 스킬 -->
         ${p.skills?.length ? `

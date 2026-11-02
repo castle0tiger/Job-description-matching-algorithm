@@ -71,7 +71,7 @@ JDcandidate_algorism/
 - `git push` → Railway 자동 배포
 - 반복적인 crash 문제 → 첫 번째 커밋 행 환경변수 로딩 문제 해결
 - Gemini API 429/503 에러 → 재시도 로직 추가 (`_RETRY_STATUS`, `_MAX_RETRIES=3`)
-- **Railway 무료 플랜**: 비동기 병렬 처리는 미구현(무료 플랜 한계), 이력서 30개 초과 업로드 어려움
+- **Railway 무료 플랜**: 당시 비동기 병렬 처리는 미구현(무료 플랜 한계), 이력서 30개 초과 업로드 어려움 → 이후 병렬 처리 구현 (아래 "핵심 설계 결정 사항" 참고)
 
 ### Phase 5 — 기능 확장
 - **분석 이력 저장**: SQLite DB (`database.py`), 이력 조회·삭제 API, `history.html`
@@ -105,7 +105,7 @@ JDcandidate_algorism/
 - 요약 카드 시각 개선 (아이콘, 컬러 배경, 부제 텍스트)
 - 모바일 반응형: 점수 바 4개 → 2×2, 자기소개서 바 → 1열, 필터 입력 → 1열
 
-### Phase 9 — 클라우드 배포 이전 (최신)
+### Phase 9 — 클라우드 배포 이전
 - **Railway → Render 이전**: Railway 무료 크레딧 소진 임박으로 Render Free 플랜으로 이전
 - `render.yaml` 추가, GitHub 저장소 연결, `GEMINI_API_KEY` 환경변수 설정
 - **Render URL**: `https://job-description-matching-algorithm.onrender.com`
@@ -148,9 +148,9 @@ JDcandidate_algorism/
 1. 사용자: JD (PDF or 텍스트 입력) + 이력서 파일들 업로드 + 필터·가중치 설정
 2. POST /api/analyze 호출
 3. backend: JD 텍스트 추출 → Gemini로 JDRequirements 생성
-4. backend: 각 이력서 텍스트 추출 → Gemini로 CandidateProfile 생성
+4. backend: 각 이력서 텍스트 추출 → Gemini로 CandidateProfile 생성 (최대 8개 동시 처리)
 5. backend: apply_filter() — 하드 필터 적용 (탈락자는 이후 AI 점수 산정 건너뜀)
-6. backend: match_candidate() — 필터 통과자에 한해 Gemini로 점수 산정
+6. backend: match_candidate() — 필터 통과자에 한해 Gemini로 점수 산정 (최대 8개 동시 처리)
 7. backend: Python에서 total_score = 가중치 적용 계산
 8. backend: SQLite에 결과 저장
 9. 프론트: results.html에 점수 순으로 카드 표시
@@ -170,6 +170,7 @@ JDcandidate_algorism/
 | 같은 점수는 공동 순위 | 동점자 순위가 업로드 순서로 갈리는 것을 방지 |
 | 경력 연수는 근무 기간으로 Python 계산 | AI 합산은 공백·겹침·누락 처리가 부정확하고 실행마다 달라짐 |
 | 도메인은 요소별 객관식 판정 + Python 점수화 | 0~100 직접 채점은 애매한 후보에서 크게 흔들림, 융합 도메인 경력이 평균에 묻힘 |
+| 이력서 파싱·점수 산정 병렬 처리 (동시 8개) | 순차 처리 대비 약 5배 단축, Render 무료 서버 CPU·메모리 한계로 상한 8 |
 | 순수 HTML/JS 프론트엔드 | Node.js 8.x 환경, React 빌드 불가 |
 | SQLite 분석 이력 | 재시작 시 초기화 (Render/Railway 무료플랜 임시 스토리지) |
 | 자기소개서 가중치 기본 0 | 자기소개서 없는 이력서가 불이익 받지 않도록 |
@@ -207,7 +208,6 @@ git push
 ## 마지막으로 논의된 미완료 사항
 
 - **필수 자격 조건 필터 확장**: 현재 단순 키워드 검색. LLM 기반 의미론적 매칭으로 확장 시 비용·지연 증가 우려로 보류. 사용자가 복잡한 조건 입력 시 오탐 가능성 존재.
-- **비동기 병렬 처리**: 이력서 30개를 동시 처리하면 속도 단축 가능하나 Render 무료플랜 제약으로 미구현.
 - **SQLite 영구 저장**: 현재 서버 재시작 시 분석 이력 초기화. Fly.io 유료 볼륨 또는 외부 DB(PostgreSQL 등) 연동 시 해결 가능하나 미구현.
 - **사용자별 이력 분리(로그인)**: 현재 모든 사용자가 동일한 분석 이력 공유. 로그인 기능 추가 시 분리 가능하나 보류.
 
@@ -219,4 +219,4 @@ git push
 GEMINI_API_KEY=...   # Google AI Studio에서 발급
 ```
 
-`analyzer.py`에 fallback 하드코딩 키 있음 (보안상 추후 제거 권장).
+키는 환경변수에서만 읽음 (하드코딩 fallback 키 없음). 요청 시 URL이 아닌 `x-goog-api-key` 헤더로 전달해 에러 메시지에 키가 노출되지 않음.
